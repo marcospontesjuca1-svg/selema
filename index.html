@@ -351,6 +351,124 @@
     .form-row { grid-template-columns: 1fr; }
     .form-row.triple { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ===== SETTINGS ===== */
+  .cfg-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 14px;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .cfg-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cfg-btn svg { flex-shrink: 0; }
+
+  .cfg-overlay {
+    position: fixed; inset: 0; z-index: 8000;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .cfg-overlay.open { display: flex; }
+
+  .cfg-modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+    overflow: hidden;
+    animation: cfg-in 0.2s ease;
+  }
+  @keyframes cfg-in {
+    from { opacity:0; transform: translateY(-12px) scale(0.97); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  .cfg-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cfg-title { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--text); display:flex; align-items:center; gap:8px; }
+  .cfg-close-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text2); font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .cfg-close-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .cfg-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .cfg-tab {
+    flex: 1; padding: 11px 8px;
+    background: transparent; border: none; border-bottom: 2px solid transparent;
+    color: var(--text3); font-family: var(--font-mono); font-size: 11px;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .cfg-tab:hover { color: var(--text); }
+  .cfg-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface); }
+
+  .cfg-body { padding: 22px; }
+  .cfg-tab-panel { display: none; }
+  .cfg-tab-panel.active { display: block; }
+
+  .cfg-label {
+    font-size: 10px; color: var(--text3); letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 10px; margin-top: 16px;
+  }
+  .cfg-label:first-child { margin-top: 0; }
+
+  .cfg-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 11px 14px; color: var(--text);
+    font-family: var(--font-mono); font-size: 13px; outline: none;
+    transition: border-color 0.2s; margin-bottom: 8px; box-sizing: border-box;
+    letter-spacing: 2px;
+  }
+  .cfg-input:focus { border-color: var(--accent); }
+
+  .cfg-primary-btn {
+    width: 100%; padding: 11px; background: var(--accent2);
+    border: none; border-radius: 8px; color: white;
+    font-family: var(--font-head); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; margin-top: 6px;
+  }
+  .cfg-primary-btn:hover { background: var(--accent); }
+
+  .cfg-secondary-btn {
+    width: 100%; padding: 11px; background: transparent;
+    border: 1px solid var(--border2); border-radius: 8px; color: var(--text2);
+    font-family: var(--font-mono); font-size: 12px;
+    cursor: pointer; transition: all 0.2s; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    letter-spacing: 0.5px;
+  }
+  .cfg-secondary-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cfg-secondary-btn.green-hover:hover { border-color: var(--green); color: var(--green); }
+  .cfg-secondary-btn.gold-hover:hover { border-color: var(--gold); color: var(--gold); }
+
+  .cfg-feedback {
+    margin-top: 10px; padding: 9px 14px; border-radius: 6px;
+    font-size: 12px; font-family: var(--font-mono);
+    display: none; text-align: center; letter-spacing: 0.5px;
+  }
+  .cfg-feedback.ok  { background: rgba(34,211,160,0.1); border: 1px solid rgba(34,211,160,0.3); color: var(--green); display: block; }
+  .cfg-feedback.err { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--red); display: block; }
+
+  .cfg-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .cfg-info { font-size: 11px; color: var(--text3); line-height: 1.7; padding: 10px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
+
   .pos-month-selector { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px; }
   .year-selector { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
   .year-btn { padding:8px 24px; border-radius:6px; border:1px solid var(--border2); background:var(--surface); color:var(--text2); font-family:var(--font-mono); font-size:13px; cursor:pointer; transition:all 0.2s; }
@@ -464,28 +582,35 @@
 </div>
 
 <script>
-(function() {
-  const HASH = '2b4f0c5e8a3d9b1f6e7c2a0d4e8f1b3c'; // hash de 7680
-  function hashCode(str) {
-    // Simple deterministic hash for client-side protection
-    let h = 0;
-    for (let i = 0; i < str.length; i++) {
-      h = Math.imul(31, h) + str.charCodeAt(i) | 0;
-    }
-    return Math.abs(h).toString(16).padStart(8,'0');
+// ===========================
+// AUTH — hash compartilhado entre login e settings
+// ===========================
+window._sHash = function(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(31, h) + str.charCodeAt(i) | 0;
   }
-  // Pre-computed: hashCode('7680') stored as reference
-  const PWD_HASH = hashCode('7680');
+  return Math.abs(h).toString(16).padStart(8, '0');
+};
 
-  // Check session
-  if (sessionStorage.getItem('selema_auth') === PWD_HASH) {
+(function() {
+  const DEFAULT_HASH = window._sHash('7680');
+
+  // Senha pode ter sido alterada e salva no localStorage
+  function getActiveHash() {
+    return localStorage.getItem('selema_pwd_hash') || DEFAULT_HASH;
+  }
+
+  // Verifica sessão ativa
+  if (sessionStorage.getItem('selema_auth') === getActiveHash()) {
     document.getElementById('login-screen').style.display = 'none';
   }
 
   window.doLogin = function() {
     const val = document.getElementById('login-input').value;
-    if (hashCode(val) === PWD_HASH) {
-      sessionStorage.setItem('selema_auth', PWD_HASH);
+    const activeHash = getActiveHash();
+    if (window._sHash(val) === activeHash) {
+      sessionStorage.setItem('selema_auth', activeHash);
       const screen = document.getElementById('login-screen');
       screen.style.transition = 'opacity 0.4s';
       screen.style.opacity = '0';
@@ -508,7 +633,6 @@
     inp.type = inp.type === 'password' ? 'text' : 'password';
   };
 
-  // Focus input on load
   window.addEventListener('load', () => {
     const inp = document.getElementById('login-input');
     if (inp) inp.focus();
@@ -523,7 +647,15 @@
     <div class="logo">SELEMA <span>INVESTMENTS</span></div>
     <div class="header-sub">Painel de Portfólios — Multi-Instituição</div>
   </div>
-  <div style="font-size:11px;color:var(--text3);">SELEMA INVESTMENTS LTD &nbsp;|&nbsp; USD</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="font-size:11px;color:var(--text3);">SELEMA INVESTMENTS LTD &nbsp;|&nbsp; USD</div>
+    <button class="cfg-btn" onclick="openSettings()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Configurações
+    </button>
+  </div>
 </div>
 
 <div class="inst-tabs">
@@ -4615,6 +4747,216 @@ function init() {
 }
 
 init();
+
+// ===========================
+// SETTINGS PANEL
+// ===========================
+
+function openSettings() {
+  document.getElementById('cfg-overlay').classList.add('open');
+  switchCfgTab('security');
+  // Limpa campos e feedback ao abrir
+  ['cfg-cur-pwd','cfg-new-pwd','cfg-confirm-pwd'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  cfgFeedback('', null);
+}
+
+function closeSettings() {
+  document.getElementById('cfg-overlay').classList.remove('open');
+}
+
+function switchCfgTab(tab) {
+  document.querySelectorAll('.cfg-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.cfg-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
+  cfgFeedback('', null);
+}
+
+function cfgFeedback(msg, type) {
+  const el = document.getElementById('cfg-feedback');
+  el.textContent = msg;
+  el.className = 'cfg-feedback' + (type ? ' ' + type : '');
+}
+
+function changePassword() {
+  const cur     = document.getElementById('cfg-cur-pwd').value;
+  const newPwd  = document.getElementById('cfg-new-pwd').value;
+  const confirm = document.getElementById('cfg-confirm-pwd').value;
+
+  const storedHash = localStorage.getItem('selema_pwd_hash') || window._sHash('7680');
+
+  if (!cur || !newPwd || !confirm) {
+    cfgFeedback('Preencha todos os campos.', 'err'); return;
+  }
+  if (window._sHash(cur) !== storedHash) {
+    cfgFeedback('Senha atual incorreta.', 'err'); return;
+  }
+  if (newPwd.length < 4) {
+    cfgFeedback('A nova senha deve ter ao menos 4 caracteres.', 'err'); return;
+  }
+  if (newPwd !== confirm) {
+    cfgFeedback('A confirmação não coincide com a nova senha.', 'err'); return;
+  }
+
+  const newHash = window._sHash(newPwd);
+  localStorage.setItem('selema_pwd_hash', newHash);
+  // Atualiza sessão corrente para não exigir novo login
+  sessionStorage.setItem('selema_auth', newHash);
+
+  ['cfg-cur-pwd','cfg-new-pwd','cfg-confirm-pwd'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  cfgFeedback('Senha alterada com sucesso!', 'ok');
+}
+
+function resetPassword() {
+  if (!confirm('Redefinir para a senha padrão (7680)?')) return;
+  localStorage.removeItem('selema_pwd_hash');
+  const defaultHash = window._sHash('7680');
+  sessionStorage.setItem('selema_auth', defaultHash);
+  cfgFeedback('Senha redefinida para o padrão.', 'ok');
+}
+
+function backupHTML() {
+  fetch(location.href)
+    .then(r => r.text())
+    .then(html => {
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'SELEMA_backup_' + new Date().toISOString().slice(0,10) + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      cfgFeedback('Backup HTML exportado.', 'ok');
+    })
+    .catch(() => {
+      // Fallback: usa o DOM atual (sem fetch, funciona com file://)
+      const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'SELEMA_backup_' + new Date().toISOString().slice(0,10) + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      cfgFeedback('Backup HTML exportado.', 'ok');
+    });
+}
+
+function backupJSON() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    santander: {
+      data:     typeof SANTANDER_DATA     !== 'undefined' ? SANTANDER_DATA     : [],
+      accrued:  typeof SANTANDER_ACCRUED  !== 'undefined' ? SANTANDER_ACCRUED  : {},
+      expenses: typeof SANTANDER_EXPENSES !== 'undefined' ? SANTANDER_EXPENSES : {},
+    },
+    bradesco: {
+      data:     typeof BRADESCO_DATA     !== 'undefined' ? BRADESCO_DATA     : [],
+      accrued:  typeof BRADESCO_ACCRUED  !== 'undefined' ? BRADESCO_ACCRUED  : {},
+      income:   typeof BRADESCO_INCOME   !== 'undefined' ? BRADESCO_INCOME   : {},
+      expenses: typeof BRADESCO_EXPENSES !== 'undefined' ? BRADESCO_EXPENSES : {},
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'SELEMA_dados_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  cfgFeedback('Dados JSON exportados.', 'ok');
+}
+
+// Fecha ao clicar no overlay (fora do modal)
+document.getElementById('cfg-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+// Fecha com Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('cfg-overlay').classList.contains('open')) {
+    closeSettings();
+  }
+});
 </script>
+
+<!-- ===========================
+     SETTINGS MODAL
+     =========================== -->
+<div id="cfg-overlay" class="cfg-overlay">
+  <div class="cfg-modal">
+
+    <div class="cfg-head">
+      <div class="cfg-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Configurações
+      </div>
+      <button class="cfg-close-btn" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="cfg-tabs">
+      <button class="cfg-tab active" data-tab="security" onclick="switchCfgTab('security')">Segurança</button>
+      <button class="cfg-tab" data-tab="backup" onclick="switchCfgTab('backup')">Backup</button>
+    </div>
+
+    <div class="cfg-body">
+
+      <!-- TAB: SEGURANÇA -->
+      <div class="cfg-tab-panel active" data-panel="security">
+        <div class="cfg-label">Alterar Senha de Acesso</div>
+        <input id="cfg-cur-pwd" class="cfg-input" type="password" placeholder="Senha atual" autocomplete="current-password">
+        <input id="cfg-new-pwd" class="cfg-input" type="password" placeholder="Nova senha" autocomplete="new-password">
+        <input id="cfg-confirm-pwd" class="cfg-input" type="password" placeholder="Confirmar nova senha" autocomplete="new-password"
+               onkeydown="if(event.key==='Enter')changePassword()">
+        <button class="cfg-primary-btn" onclick="changePassword()">Alterar Senha</button>
+
+        <hr class="cfg-divider">
+
+        <div class="cfg-label">Restaurar Padrão</div>
+        <div class="cfg-info">Redefine a senha de acesso para o valor padrão de fábrica. Use caso tenha esquecido a senha personalizada.</div>
+        <button class="cfg-secondary-btn" onclick="resetPassword()" style="margin-top:10px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+          Redefinir para senha padrão
+        </button>
+      </div>
+
+      <!-- TAB: BACKUP -->
+      <div class="cfg-tab-panel" data-panel="backup">
+        <div class="cfg-label">Exportar Aplicação</div>
+        <div class="cfg-info">Exporta o painel completo como um único arquivo HTML autocontido, incluindo todos os dados e a interface.</div>
+        <button class="cfg-secondary-btn green-hover" onclick="backupHTML()" style="margin-top:10px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar backup (.html)
+        </button>
+
+        <hr class="cfg-divider">
+
+        <div class="cfg-label">Exportar Dados</div>
+        <div class="cfg-info">Exporta todos os dados dos portfólios (Santander e Bradesco) em formato JSON estruturado — útil para auditoria ou importação futura.</div>
+        <button class="cfg-secondary-btn gold-hover" onclick="backupJSON()" style="margin-top:10px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar dados (.json)
+        </button>
+      </div>
+
+      <!-- Feedback único fora das tabs -->
+      <div id="cfg-feedback" class="cfg-feedback"></div>
+
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
