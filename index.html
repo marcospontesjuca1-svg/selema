@@ -521,12 +521,39 @@
       Painel de Portfólios
     </div>
 
+    <div style="position:relative;margin-bottom:12px;">
+      <input
+        id="login-user"
+        type="text"
+        placeholder="Usuário"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-input').focus()"
+        autocomplete="username"
+        style="
+          width:100%;
+          background:#0a0c10;
+          border:1px solid #2d3340;
+          border-radius:10px;
+          padding:14px 18px;
+          color:#e8ecf4;
+          font-family:'DM Mono',monospace;
+          font-size:15px;
+          outline:none;
+          box-sizing:border-box;
+          transition:border-color 0.2s;
+          letter-spacing:1px;
+        "
+        onfocus="this.style.borderColor='#4f9eff'"
+        onblur="this.style.borderColor='#2d3340'"
+      >
+    </div>
+
     <div style="position:relative;margin-bottom:16px;">
       <input
         id="login-input"
         type="password"
         placeholder="Senha de acesso"
         onkeydown="if(event.key==='Enter')doLogin()"
+        autocomplete="current-password"
         style="
           width:100%;
           background:#0a0c10;
@@ -594,38 +621,56 @@ window._sHash = function(str) {
 };
 
 (function() {
-  const DEFAULT_HASH = window._sHash('7680');
+  const DEFAULT_HASH  = window._sHash('7680');
+  const DEFAULT_LOGIN = 'selema';
 
-  // Senha pode ter sido alterada e salva no localStorage
   function getActiveHash() {
     return localStorage.getItem('selema_pwd_hash') || DEFAULT_HASH;
   }
+  window._getActiveLogin = function() {
+    return localStorage.getItem('selema_login') || DEFAULT_LOGIN;
+  };
 
   // Verifica sessão ativa
   if (sessionStorage.getItem('selema_auth') === getActiveHash()) {
     document.getElementById('login-screen').style.display = 'none';
   }
 
+  function showLoginError(msg, fields) {
+    const err = document.getElementById('login-error');
+    err.textContent = msg;
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      el.style.borderColor = '#f87171';
+      el.value = '';
+    });
+    setTimeout(() => {
+      err.textContent = '';
+      fields.forEach(id => {
+        document.getElementById(id).style.borderColor = '#2d3340';
+      });
+    }, 2500);
+  }
+
   window.doLogin = function() {
-    const val = document.getElementById('login-input').value;
+    const user       = document.getElementById('login-user').value.trim();
+    const pwd        = document.getElementById('login-input').value;
     const activeHash = getActiveHash();
-    if (window._sHash(val) === activeHash) {
-      sessionStorage.setItem('selema_auth', activeHash);
-      const screen = document.getElementById('login-screen');
-      screen.style.transition = 'opacity 0.4s';
-      screen.style.opacity = '0';
-      setTimeout(() => screen.style.display = 'none', 400);
-    } else {
-      const err = document.getElementById('login-error');
-      err.textContent = 'Senha incorreta. Tente novamente.';
-      const inp = document.getElementById('login-input');
-      inp.style.borderColor = '#f87171';
-      inp.value = '';
-      setTimeout(() => {
-        err.textContent = '';
-        inp.style.borderColor = '#2d3340';
-      }, 2500);
+
+    if (user !== window._getActiveLogin()) {
+      showLoginError('Usuário ou senha incorretos.', ['login-user', 'login-input']);
+      return;
     }
+    if (window._sHash(pwd) !== activeHash) {
+      showLoginError('Usuário ou senha incorretos.', ['login-input']);
+      return;
+    }
+
+    sessionStorage.setItem('selema_auth', activeHash);
+    const screen = document.getElementById('login-screen');
+    screen.style.transition = 'opacity 0.4s';
+    screen.style.opacity = '0';
+    setTimeout(() => screen.style.display = 'none', 400);
   };
 
   window.togglePwd = function() {
@@ -634,7 +679,7 @@ window._sHash = function(str) {
   };
 
   window.addEventListener('load', () => {
-    const inp = document.getElementById('login-input');
+    const inp = document.getElementById('login-user');
     if (inp) inp.focus();
   });
 })();
@@ -4755,8 +4800,11 @@ init();
 function openSettings() {
   document.getElementById('cfg-overlay').classList.add('open');
   switchCfgTab('security');
+  // Mostra login atual
+  const display = document.getElementById('cfg-current-login-display');
+  if (display) display.textContent = window._getActiveLogin ? window._getActiveLogin() : 'selema';
   // Limpa campos e feedback ao abrir
-  ['cfg-cur-pwd','cfg-new-pwd','cfg-confirm-pwd'].forEach(id => {
+  ['cfg-login-pwd','cfg-new-login','cfg-confirm-login','cfg-cur-pwd','cfg-new-pwd','cfg-confirm-pwd'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -4777,6 +4825,39 @@ function cfgFeedback(msg, type) {
   const el = document.getElementById('cfg-feedback');
   el.textContent = msg;
   el.className = 'cfg-feedback' + (type ? ' ' + type : '');
+}
+
+function changeLogin() {
+  const pwd          = document.getElementById('cfg-login-pwd').value;
+  const newLogin     = document.getElementById('cfg-new-login').value.trim();
+  const confirmLogin = document.getElementById('cfg-confirm-login').value.trim();
+
+  const storedHash = localStorage.getItem('selema_pwd_hash') || window._sHash('7680');
+
+  if (!pwd || !newLogin || !confirmLogin) {
+    cfgFeedback('Preencha todos os campos.', 'err'); return;
+  }
+  if (window._sHash(pwd) !== storedHash) {
+    cfgFeedback('Senha atual incorreta.', 'err'); return;
+  }
+  if (newLogin.length < 3) {
+    cfgFeedback('O login deve ter ao menos 3 caracteres.', 'err'); return;
+  }
+  if (newLogin !== confirmLogin) {
+    cfgFeedback('Os logins não coincidem.', 'err'); return;
+  }
+
+  localStorage.setItem('selema_login', newLogin);
+
+  ['cfg-login-pwd','cfg-new-login','cfg-confirm-login'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  // Atualiza exibição do login atual
+  const display = document.getElementById('cfg-current-login-display');
+  if (display) display.textContent = newLogin;
+
+  cfgFeedback('Login alterado com sucesso!', 'ok');
 }
 
 function changePassword() {
@@ -4811,11 +4892,14 @@ function changePassword() {
 }
 
 function resetPassword() {
-  if (!confirm('Redefinir para a senha padrão (7680)?')) return;
+  if (!confirm('Redefinir login e senha para os valores padrão?\nLogin: selema  |  Senha: 7680')) return;
   localStorage.removeItem('selema_pwd_hash');
+  localStorage.removeItem('selema_login');
   const defaultHash = window._sHash('7680');
   sessionStorage.setItem('selema_auth', defaultHash);
-  cfgFeedback('Senha redefinida para o padrão.', 'ok');
+  const display = document.getElementById('cfg-current-login-display');
+  if (display) display.textContent = 'selema';
+  cfgFeedback('Login e senha redefinidos para o padrão.', 'ok');
 }
 
 function backupHTML() {
@@ -4915,6 +4999,17 @@ document.addEventListener('keydown', function(e) {
 
       <!-- TAB: SEGURANÇA -->
       <div class="cfg-tab-panel active" data-panel="security">
+
+        <div class="cfg-label">Alterar Login de Acesso</div>
+        <div class="cfg-info" style="margin-bottom:10px;">Login atual: <span id="cfg-current-login-display" style="color:var(--accent);font-family:var(--font-mono);"></span></div>
+        <input id="cfg-login-pwd" class="cfg-input" type="password" placeholder="Senha atual (para confirmar)" autocomplete="current-password">
+        <input id="cfg-new-login" class="cfg-input" type="text" placeholder="Novo login" autocomplete="username">
+        <input id="cfg-confirm-login" class="cfg-input" type="text" placeholder="Confirmar novo login" autocomplete="username"
+               onkeydown="if(event.key==='Enter')changeLogin()">
+        <button class="cfg-primary-btn" onclick="changeLogin()">Alterar Login</button>
+
+        <hr class="cfg-divider">
+
         <div class="cfg-label">Alterar Senha de Acesso</div>
         <input id="cfg-cur-pwd" class="cfg-input" type="password" placeholder="Senha atual" autocomplete="current-password">
         <input id="cfg-new-pwd" class="cfg-input" type="password" placeholder="Nova senha" autocomplete="new-password">
@@ -4925,10 +5020,10 @@ document.addEventListener('keydown', function(e) {
         <hr class="cfg-divider">
 
         <div class="cfg-label">Restaurar Padrão</div>
-        <div class="cfg-info">Redefine a senha de acesso para o valor padrão de fábrica. Use caso tenha esquecido a senha personalizada.</div>
+        <div class="cfg-info">Redefine o login e a senha para os valores padrão de fábrica. Use caso tenha esquecido as credenciais personalizadas.</div>
         <button class="cfg-secondary-btn" onclick="resetPassword()" style="margin-top:10px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-          Redefinir para senha padrão
+          Redefinir login e senha para o padrão
         </button>
       </div>
 
