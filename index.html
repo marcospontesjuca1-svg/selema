@@ -470,10 +470,29 @@
   .cfg-info { font-size: 11px; color: var(--text3); line-height: 1.7; padding: 10px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
 
   .pos-month-selector { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px; }
-  .year-selector { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .year-selector { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
   .year-btn { padding:8px 24px; border-radius:6px; border:1px solid var(--border2); background:var(--surface); color:var(--text2); font-family:var(--font-mono); font-size:13px; cursor:pointer; transition:all 0.2s; }
   .year-btn:hover { border-color:#34d399; color:#34d399; }
   .year-btn.active { background:rgba(52,211,153,0.15); border-color:#34d399; color:#34d399; font-weight:600; }
+  .year-select {
+    padding: 7px 32px 7px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238891a4' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    min-width: 90px;
+  }
+  .year-select:hover, .year-select:focus { border-color: #34d399; color: #34d399; }
 
   .an-table { width: 100%; border-collapse: collapse; font-size: 11px; }
   .an-table th { padding: 8px 10px; text-align: right; color: var(--text3); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid var(--border); font-weight: 400; }
@@ -3966,9 +3985,9 @@ function getAllYears(data) {
 function buildYearSelector(containerId, years, activeYear, onSelect) {
   const c = document.getElementById(containerId);
   if (!c) return;
-  c.innerHTML = years.map(y =>
-    `<button class="year-btn${y===activeYear?' active':''}" onclick="${onSelect}(${y})">${y}</button>`
-  ).join('');
+  c.innerHTML = `<select class="year-select" onchange="${onSelect}(+this.value)">
+    ${years.map(y => `<option value="${y}"${y===activeYear?' selected':''}>${y}</option>`).join('')}
+  </select>`;
 }
 
 // Main year selector for month filtering (Santander and Bradesco tabs)
@@ -3979,9 +3998,9 @@ function buildMainYearSelector(containerId, data, activeYear, instKey) {
   const c = document.getElementById(containerId);
   if (!c) return;
   const years = getAllYears(data);
-  c.innerHTML = years.map(y =>
-    `<button class="year-btn${y===activeYear?' active':''}" onclick="selectMainYear('${instKey}',${y})">${y}</button>`
-  ).join('');
+  c.innerHTML = `<select class="year-select" onchange="selectMainYear('${instKey}',+this.value)">
+    ${years.map(y => `<option value="${y}"${y===activeYear?' selected':''}>${y}</option>`).join('')}
+  </select>`;
 }
 
 function selectMainYear(instKey, year) {
@@ -4110,6 +4129,7 @@ function renderSantAnnual(year) {
   let prevAcc = base ? getAcc(base.key) : null;
   // If base acc not in SANTANDER_ACCRUED, try first month of year as base
   if (prevAcc === null && yearData.length > 0) prevAcc = getAcc(yearData[0].key);
+  let hasRebalNote = false;
 
   yearData.forEach((d, i) => {
     const cup = d.coupons || 0;
@@ -4117,11 +4137,21 @@ function renderSantAnnual(year) {
     const acc = getAcc(d.key);
     const exp = getTotalExpenses('santander', d.key);
     let dacc = null, mtm = null;
+    let rebalancing = false;
 
     if (acc !== null && prevAcc !== null) {
-      dacc = (acc - prevAcc) + cup + div;
-      mtm  = d.variation - dacc - (-exp); // MtM = var - dacc + expenses (expenses reduce var)
-      mtm  = d.variation - dacc;
+      const rawDacc = (acc - prevAcc) + cup + div;
+      if (rawDacc < 0) {
+        // Acruado negativo indica rebalanceamento de carteira: juro recebido
+        // no preço sujo de bonds vendidos não está declarado em coupons.
+        rebalancing = true;
+        hasRebalNote = true;
+        dacc = null;
+        mtm  = null;
+      } else {
+        dacc = rawDacc;
+        mtm  = d.variation - dacc;
+      }
     } else if (i === 0 && prevAcc === null && acc !== null) {
       dacc = null; mtm = null;
     }
@@ -4132,8 +4162,12 @@ function renderSantAnnual(year) {
     cumExp  += exp;
     if (dacc !== null) { cumDacc += dacc; cumMtm += mtm; }
 
-    const daccStr = dacc !== null ? `<span class="${dacc>=0?'pos':'neg'}">${dacc>=0?'+':''}${fmt(dacc)}</span>` : '—';
-    const mtmStr  = mtm  !== null ? `<span class="${mtm>=0?'pos':'neg'}">${mtm>=0?'+':''}${fmt(mtm)}</span>` : '—';
+    const daccStr = rebalancing
+      ? `<span title="Rebalanceamento de carteira: juros recebidos no preço sujo de bonds vendidos não declarados separadamente" style="color:var(--text3);cursor:help">n/d ¹</span>`
+      : dacc !== null ? `<span class="${dacc>=0?'pos':'neg'}">${dacc>=0?'+':''}${fmt(dacc)}</span>` : '—';
+    const mtmStr  = rebalancing
+      ? `<span style="color:var(--text3)">n/d ¹</span>`
+      : mtm  !== null ? `<span class="${mtm>=0?'pos':'neg'}">${mtm>=0?'+':''}${fmt(mtm)}</span>` : '—';
     const expStr  = exp > 0 ? `<span style="color:#f87171">−${fmt(exp)}</span>` : '<span style="color:var(--text3)">—</span>';
 
     html += `<tr>
@@ -4168,7 +4202,17 @@ function renderSantAnnual(year) {
     <td class="${(totalVar||0)>=0?'pos':'neg'}">${totalVar!=null?(totalVar>=0?'+':'')+fmt(totalVar):'—'}</td>
   </tr>`;
 
-  document.getElementById('sant-annual-table').innerHTML = html + '</tbody></table>';
+  if (hasRebalNote) {
+    html += `</tbody></table><p style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.6;">
+      ¹ <strong style="color:var(--text2)">n/d — Rebalanceamento de carteira:</strong>
+      Neste mês houve venda de bonds com juro acruado embutido no preço sujo. Esse juro recebido
+      não é declarado separadamente como cupom, tornando o Δ Acruado e a Marcação a Mercado
+      indetermináveis pela fórmula padrão. O total anual (linha TOTAL) usa o método ponto-a-ponto
+      e não é afetado.</p>`;
+  } else {
+    html += '</tbody></table>';
+  }
+  document.getElementById('sant-annual-table').innerHTML = html;
 }
 
 function renderBradAnnual(year) {
@@ -4217,6 +4261,7 @@ function renderBradAnnual(year) {
 
   let cumCup=0, cumDiv=0, cumDacc=0, cumMtm=0, cumExp=0;
   let prevAcc = base ? getAcc(base.key) : null;
+  let hasRebalNoteBrad = false;
 
   yearData.forEach(d => {
     const cup  = bradCupons(d.key);
@@ -4228,9 +4273,18 @@ function renderBradAnnual(year) {
     const var_ = d.variation;
 
     let dacc = null, mtm = null;
+    let rebalancing = false;
     if (acc !== null && prevAcc !== null && var_ != null) {
-      dacc = (acc - prevAcc) + cup + div;
-      mtm  = var_ - dacc;
+      const rawDacc = (acc - prevAcc) + cup + div;
+      if (rawDacc < 0) {
+        rebalancing = true;
+        hasRebalNoteBrad = true;
+        dacc = null;
+        mtm  = null;
+      } else {
+        dacc = rawDacc;
+        mtm  = var_ - dacc;
+      }
     }
 
     cumCup  += cup;
@@ -4238,8 +4292,12 @@ function renderBradAnnual(year) {
     cumExp  += exp;
     if (dacc !== null) { cumDacc += dacc; cumMtm += mtm; }
 
-    const daccStr = dacc !== null ? `<span class="${dacc>=0?'pos':'neg'}">${dacc>=0?'+':''}${fmt(dacc)}</span>` : '—';
-    const mtmStr  = mtm  !== null ? `<span class="${mtm>=0?'pos':'neg'}">${mtm>=0?'+':''}${fmt(mtm)}</span>`  : '—';
+    const daccStr = rebalancing
+      ? `<span title="Rebalanceamento de carteira: juros recebidos no preço sujo de bonds vendidos não declarados separadamente" style="color:var(--text3);cursor:help">n/d ¹</span>`
+      : dacc !== null ? `<span class="${dacc>=0?'pos':'neg'}">${dacc>=0?'+':''}${fmt(dacc)}</span>` : '—';
+    const mtmStr  = rebalancing
+      ? `<span style="color:var(--text3)">n/d ¹</span>`
+      : mtm  !== null ? `<span class="${mtm>=0?'pos':'neg'}">${mtm>=0?'+':''}${fmt(mtm)}</span>`  : '—';
     const varStr  = var_ != null  ? `${var_>=0?'+':''}${fmt(var_)}` : '—';
     const expStr  = exp > 0 ? `<span style="color:#f87171">−${fmt(exp)}</span>` : '<span style="color:var(--text3)">—</span>';
 
@@ -4279,7 +4337,16 @@ function renderBradAnnual(year) {
     <td class="${(totalVar||0)>=0?'pos':'neg'}">${totalVar!=null?(totalVar>=0?'+':'')+fmt(totalVar):'—'}</td>
   </tr>`;
 
-  document.getElementById('brad-annual-table').innerHTML = html + '</tbody></table>';
+  if (hasRebalNoteBrad) {
+    html += `</tbody></table><p style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.6;">
+      ¹ <strong style="color:var(--text2)">n/d — Rebalanceamento de carteira:</strong>
+      Neste mês houve venda de bonds com juro acruado embutido no preço sujo. Esse juro recebido
+      não é declarado separadamente como cupom, tornando o Δ Acruado e a Marcação a Mercado
+      indetermináveis pela fórmula padrão. O total anual usa o método ponto-a-ponto e não é afetado.</p>`;
+  } else {
+    html += '</tbody></table>';
+  }
+  document.getElementById('brad-annual-table').innerHTML = html;
 }
 
 function renderConsAnnual(year) {
