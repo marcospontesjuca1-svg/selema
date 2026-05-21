@@ -5032,6 +5032,26 @@ function handleImportFile(input, mode) {
   const file = input.files[0];
   if (!file) return;
   input.value = '';
+  if (file.name.toLowerCase().endsWith('.pdf')) {
+    cfgFeedback('Processando PDF…', 'ok');
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        const pdfjs = await loadPDFJS();
+        const pages = await extractPDFLines(pdfjs, e.target.result);
+        let parsed;
+        if (mode === 'santander') parsed = parseSantanderPDF(pages);
+        else if (mode === 'bradesco') parsed = parseBradescoPDF(pages);
+        else throw new Error('Selecione Santander ou Bradesco para importar PDF');
+        const result = applyImportData(parsed, mode);
+        cfgFeedback('PDF importado: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s).', 'ok');
+      } catch(err) {
+        cfgFeedback('Erro no PDF: ' + err.message, 'err');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -5090,6 +5110,194 @@ function applyImportData(json, mode) {
 
   init();
   return { added, updated };
+}
+
+// ===== PDF IMPORT =====
+
+function parseEUNum(s) { return parseFloat(s.replace(/\./g, '').replace(',', '.')); }
+function parseUSNum(s) { return parseFloat(s.replace(/,/g, '')); }
+
+function loadPDFJS() {
+  return new Promise(function(resolve, reject) {
+    if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js';
+    s.onload = function() {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js';
+      resolve(window.pdfjsLib);
+    };
+    s.onerror = function() { reject(new Error('Falha ao carregar PDF.js')); };
+    document.head.appendChild(s);
+  });
+}
+
+async function extractPDFLines(pdfjsLib, buffer) {
+  const doc = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+  const pages = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const content = await page.getTextContent();
+    const rows = {};
+    for (const item of content.items) {
+      if (!item.str || !item.str.trim()) continue;
+      const y = Math.round(item.transform[5]);
+      if (!rows[y]) rows[y] = [];
+      rows[y].push({ x: item.transform[4], str: item.str });
+    }
+    const lines = Object.keys(rows).map(Number).sort((a, b) => b - a)
+      .map(y => rows[y].sort((a, b) => a.x - b.x).map(i => i.str).join(' '));
+    pages.push(lines);
+  }
+  return pages;
+}
+
+function parseSantanderPDF(pages) {
+  const all = [].concat(...pages);
+
+  // Period: "01-JAN-26 to 31-JAN-26"
+  const pLine = all.find(l => /\d{2}-[A-Z]{3}-\d{2} to \d{2}-[A-Z]{3}-\d{2}/.test(l));
+  if (!pLine) throw new Error('Santander: período não encontrado no PDF');
+  const pm = pLine.match(/\d{2}-([A-Z]{3})-(\d{2}) to/);
+  const enPT = {JAN:'JAN',FEB:'FEV',MAR:'MAR',APR:'ABR',MAY:'MAI',JUN:'JUN',JUL:'JUL',AUG:'AGO',SEP:'SET',OCT:'OUT',NOV:'NOV',DEC:'DEZ'};
+  const mthPT = enPT[pm[1]] || pm[1];
+  const yr2 = parseInt(pm[2], 10), yr4 = 2000 + yr2;
+  const mthNum = {JAN:1,FEV:2,MAR:3,ABR:4,MAI:5,JUN:6,JUL:7,AGO:8,SET:9,OUT:10,NOV:11,DEZ:12}[mthPT];
+  const key = mthPT + '_' + String(yr2).padStart(2, '0');
+  const label = mthPT[0] + mthPT.slice(1).toLowerCase() + '/' + String(yr2).padStart(2, '0');
+
+  // Net worth: "$ 13,934,269.16 $ ... $ 0.00 $ 0.00"
+  let net_worth = 0;
+  for (const l of all) {
+    const m = l.match(/\$\s*([\d,]+\.\d{2})\s+\$\s*[\d,]+\.\d{2}\s+\$\s*0\.00\s+\$\s*0\.00/);
+    if (m) { net_worth = parseUSNum(m[1]); break; }
+  }
+
+  // Variation: "Variation in net worth -68,355.54"
+  let variation = 0;
+  const vl = all.find(l => /Variation in net worth/.test(l));
+  if (vl) { const m = vl.match(/Variation in net worth\s+([-\d,]+\.\d{2})/); if (m) variation = parseUSNum(m[1]); }
+
+  // MTD/YTD: "Total 13,934,269.16 0.67% 0.67% 100.00%"
+  let mtd = 0, ytd = 0;
+  const rl = all.find(l => /^Total\s+[\d,]+\.\d{2}\s+[\d.]+%\s+[\d.]+%\s+100\.00%/.test(l));
+  if (rl) { const m = rl.match(/([\d.]+)%\s+([\d.]+)%\s+100\.00%/); if (m) { mtd = parseFloat(m[1]); ytd = parseFloat(m[2]); } }
+
+  // Asset class pcts from portfolio detail: "Short-Term 321,034.76 2.30%"
+  let st_pct = 0, fi_pct = 0, eq_pct = 0;
+  for (const l of all) {
+    let m;
+    if ((m = l.match(/Short-Term\s+[\d,]+\.\d{2}\s+([\d.]+)%/))) st_pct = parseFloat(m[1]);
+    else if ((m = l.match(/Fixed Income\s+[\d,]+\.\d{2}\s+([\d.]+)%$/))) fi_pct = parseFloat(m[1]);
+    else if ((m = l.match(/^Equities\s+[\d,]+\.\d{2}\s+([\d.]+)%$/))) eq_pct = parseFloat(m[1]);
+  }
+
+  // Coupons: "Dividends / coupons / interest 30,418.25"
+  let coupons = 0, dividends = 0;
+  const dcl = all.find(l => /Dividends \/ coupons \/ interest/.test(l));
+  if (dcl) { const m = dcl.match(/Dividends \/ coupons \/ interest\s+([\d,]+\.\d{2})/); if (m) coupons = parseUSNum(m[1]); }
+  for (let i = 0; i < all.length; i++) {
+    if (/Dividends Received/.test(all[i])) {
+      for (let j = i + 1; j < Math.min(i + 6, all.length); j++) {
+        const m = all[j].match(/^\$\s*([\d,]+\.\d{2})$/);
+        if (m) { dividends = parseUSNum(m[1]); break; }
+      }
+      break;
+    }
+  }
+
+  // Expenses: INTEGRA REAL ESTATE + AMERICAN EXPRESS (line before withdrawal)
+  let outras = 0;
+  for (let i = 1; i < all.length; i++) {
+    if (/INTEGRA REAL ESTATE|AMERICAN EXPRESS/i.test(all[i])) {
+      const m = all[i - 1].match(/USD\s+\S+\s+\S+\s+-\s+-([\d,]+\.\d{2})\s/);
+      if (m) outras += parseUSNum(m[1]);
+    }
+  }
+
+  return {
+    data: [{ key, label, month: mthNum, year: yr4, net_worth, mtd_return: mtd, ytd_return: ytd,
+      variation, short_term_pct: st_pct, fixed_income_pct: fi_pct, equities_pct: eq_pct,
+      coupons, dividends: 0 }],
+    expenses: { [key]: { custodia: 0, comissao: 0, iof: 0, cambio: 0, outras } }
+  };
+}
+
+function parseBradescoPDF(pages) {
+  const all = [].concat(...pages);
+
+  // Period: "Period: 01/01/26 to 31/01/26"
+  const pLine = all.find(l => /Period:\s*\d{2}\/\d{2}\/\d{2}\s+to\s+\d{2}\/\d{2}\/\d{2}/.test(l));
+  if (!pLine) throw new Error('Bradesco: período não encontrado no PDF');
+  const pm = pLine.match(/Period:\s*\d{2}\/(\d{2})\/(\d{2})\s+to\s+\d{2}\/(\d{2})\/(\d{2})/);
+  const mthNum = parseInt(pm[3], 10), yr2 = parseInt(pm[4], 10), yr4 = 2000 + yr2;
+  const ptM = ['','JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const mthPT = ptM[mthNum];
+  const key = mthPT + '_' + String(yr2).padStart(2, '0');
+  const label = mthPT[0] + mthPT.slice(1).toLowerCase() + '/' + String(yr2).padStart(2, '0');
+
+  // Net Position (US format) — value on next line
+  let net_worth = 0;
+  for (let i = 0; i < all.length - 1; i++) {
+    if (/Net Position in US\$:/.test(all[i])) {
+      const m = all[i + 1].match(/^([\d,]+\.\d{2})$/);
+      if (m) { net_worth = parseUSNum(m[1]); break; }
+      const m2 = all[i].match(/Net Position in US\$:\s*([\d,]+\.\d{2})/);
+      if (m2) { net_worth = parseUSNum(m2[1]); break; }
+    }
+  }
+
+  // Category totals (EU format) — value on next line
+  let cash = 0, equities = 0, bonds = 0, mutual_funds = 0, structured_notes = 0;
+  for (let i = 0; i < all.length - 1; i++) {
+    const l = all[i], nx = all[i + 1];
+    let m;
+    if (/Total CASH ACCOUNT in US\$\s*:/.test(l)) {
+      m = nx.match(/^([\d.]+,\d{2})$/); if (m) cash = parseEUNum(m[1]);
+    } else if (/Total EQUITIES.*in US\$\s*:/.test(l)) {
+      m = nx.match(/^([\d.]+,\d{2})$/); if (m) equities = parseEUNum(m[1]);
+    } else if (/Total BONDS in US\$\s*:/.test(l)) {
+      m = nx.match(/^([\d.]+,\d{2})$/); if (m) bonds = parseEUNum(m[1]);
+    } else if (/Total MUTUAL FUNDS in US\$\s*:/.test(l)) {
+      m = nx.match(/^([\d.]+,\d{2})$/); if (m) mutual_funds = parseEUNum(m[1]);
+    } else if (/Total STRUCTURED NOTES in US\$\s*:/.test(l)) {
+      m = nx.match(/^([\d.]+,\d{2})$/); if (m) structured_notes = parseEUNum(m[1]);
+    }
+  }
+
+  // Percentages computed from amounts
+  const tot = net_worth || (cash + equities + bonds + mutual_funds + structured_notes) || 1;
+  const pct = v => Math.round(v / tot * 10000) / 100;
+  const cash_pct = pct(cash), eq_pct = pct(equities), bonds_pct = pct(bonds),
+        mf_pct = pct(mutual_funds), notes_pct = pct(structured_notes);
+
+  // Income: INTER.PAYMT + INTEREST credits; ADJ subtracts the reversed debit
+  let income = 0, comissao = 0;
+  const numRe = /^[0-9]+\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})\s/;
+  for (let i = 0; i < all.length - 1; i++) {
+    const ln = all[i], nx = all[i + 1];
+    const nm = nx.match(numRe);
+    if (!nm) continue;
+    const debit = parseEUNum(nm[1]), credit = parseEUNum(nm[2]);
+    if (/^INTER\.PAYMT/i.test(ln) || /^INTEREST\s+US/i.test(ln)) income += credit;
+    else if (/^ADJ/i.test(ln)) income -= debit;
+    else if (/^COMM\./i.test(ln)) comissao += debit;
+  }
+
+  // Variation from previous BRADESCO_DATA entry
+  let variation = 0;
+  if (typeof BRADESCO_DATA !== 'undefined' && BRADESCO_DATA.length > 0) {
+    const last = BRADESCO_DATA[BRADESCO_DATA.length - 1];
+    if (last.key !== key && last.net_worth) variation = Math.round((net_worth - last.net_worth) * 100) / 100;
+  }
+
+  return {
+    data: [{ key, label, month: mthNum, year: yr4, net_worth, cash, equities, bonds,
+      mutual_funds, structured_notes, cash_pct, equities_pct: eq_pct, bonds_pct,
+      mutual_funds_pct: mf_pct, notes_pct, variation }],
+    income: { [key]: Math.round(income * 100) / 100 },
+    expenses: { [key]: { custodia: 0, comissao: Math.round(comissao * 100) / 100, iof: 0, cambio: 0, outras: 0 } }
+  };
 }
 
 // Fecha ao clicar no overlay (fora do modal)
@@ -5181,21 +5389,21 @@ document.addEventListener('keydown', function(e) {
       <!-- TAB: IMPORTAR -->
       <div class="cfg-tab-panel" data-panel="import">
         <div class="cfg-label">Importar Portfólio Santander</div>
-        <div class="cfg-info">Selecione o arquivo JSON exportado do Santander. Novos meses serão adicionados; meses existentes serão atualizados.</div>
-        <input type="file" id="import-sant-file" accept=".json" style="display:none" onchange="handleImportFile(this, 'santander')">
+        <div class="cfg-info">Selecione o extrato mensal do Santander International em PDF, ou um arquivo JSON exportado anteriormente. Novos meses serão adicionados; meses existentes serão atualizados.</div>
+        <input type="file" id="import-sant-file" accept=".json,.pdf" style="display:none" onchange="handleImportFile(this, 'santander')">
         <button class="cfg-secondary-btn" onclick="document.getElementById('import-sant-file').click()" style="margin-top:10px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Importar Santander (.json)
+          Importar Santander (.pdf ou .json)
         </button>
 
         <hr class="cfg-divider">
 
         <div class="cfg-label">Importar Portfólio Bradesco</div>
-        <div class="cfg-info">Selecione o arquivo JSON exportado do Bradesco. Novos meses serão adicionados; meses existentes serão atualizados.</div>
-        <input type="file" id="import-brad-file" accept=".json" style="display:none" onchange="handleImportFile(this, 'bradesco')">
+        <div class="cfg-info">Selecione o extrato mensal do Bradesco Europa em PDF (Consolidated Statement), ou um arquivo JSON exportado anteriormente. Novos meses serão adicionados; meses existentes serão atualizados.</div>
+        <input type="file" id="import-brad-file" accept=".json,.pdf" style="display:none" onchange="handleImportFile(this, 'bradesco')">
         <button class="cfg-secondary-btn" onclick="document.getElementById('import-brad-file').click()" style="margin-top:10px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Importar Bradesco (.json)
+          Importar Bradesco (.pdf ou .json)
         </button>
 
         <hr class="cfg-divider">
