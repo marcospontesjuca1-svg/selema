@@ -5053,33 +5053,36 @@ function resetPassword() {
 }
 
 function backupHTML() {
+  function embedData(html) {
+    const snapshot = {
+      santander: { data: SANTANDER_DATA, accrued: SANTANDER_ACCRUED, expenses: SANTANDER_EXPENSES },
+      bradesco:  { data: BRADESCO_DATA,  accrued: BRADESCO_ACCRUED,  income: BRADESCO_INCOME, expenses: BRADESCO_EXPENSES }
+    };
+    const safe = JSON.stringify(snapshot).replace(/<\//g, '<\\/');
+    const inj = '\n<script>(function(){try{var d=' + safe + ';applyImportData(d.santander,"santander");applyImportData(d.bradesco,"bradesco");saveImportToStorage();}catch(e){console.warn("selema backup",e);}})();<\/script>\n';
+    return html.replace('</body>', inj + '</body>');
+  }
+
+  const filename = 'SELEMA_backup_' + new Date().toISOString().slice(0,10) + '.html';
+
+  function download(html) {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    cfgFeedback('Backup HTML exportado com todos os dados atuais.', 'ok');
+  }
+
   fetch(location.href)
     .then(r => r.text())
-    .then(html => {
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = 'SELEMA_backup_' + new Date().toISOString().slice(0,10) + '.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      cfgFeedback('Backup HTML exportado.', 'ok');
-    })
+    .then(html => download(embedData(html)))
     .catch(() => {
-      // Fallback: usa o DOM atual (sem fetch, funciona com file://)
       const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = 'SELEMA_backup_' + new Date().toISOString().slice(0,10) + '.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      cfgFeedback('Backup HTML exportado.', 'ok');
+      download(embedData(html));
     });
 }
 
