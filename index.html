@@ -7,23 +7,23 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0c10;
-    --surface: #111318;
-    --surface2: #181c24;
-    --border: #232830;
-    --border2: #2d3340;
-    --text: #e8ecf4;
-    --text2: #8891a4;
-    --text3: #535c6e;
-    --accent: #4f9eff;
-    --accent2: #2563eb;
-    --green: #22d3a0;
-    --red: #f87171;
-    --gold: #f5c842;
+    --bg: #f2f4f8;
+    --surface: #ffffff;
+    --surface2: #f5f7fa;
+    --border: #e2e6ef;
+    --border2: #cdd3e0;
+    --text: #1a2033;
+    --text2: #4d5875;
+    --text3: #8896aa;
+    --accent: #1a6dc7;
+    --accent2: #1258a8;
+    --green: #0b9a71;
+    --red: #d63838;
+    --gold: #b8890a;
     --santander: #ec0000;
     --bradesco: #CC092F;
-    --bradesco-light: #e8294a;
-    --consolidated: #4f9eff;
+    --bradesco-light: #c8122e;
+    --consolidated: #1a6dc7;
     --font-head: 'Syne', sans-serif;
     --font-mono: 'DM Mono', monospace;
   }
@@ -46,7 +46,7 @@
     justify-content: space-between;
     position: sticky;
     top: 0;
-    background: rgba(10,12,16,0.92);
+    background: rgba(242,244,248,0.95);
     backdrop-filter: blur(12px);
     z-index: 100;
   }
@@ -226,11 +226,11 @@
   .table-row {
     display: grid; gap: 8px;
     padding: 12px 8px;
-    border-bottom: 1px solid rgba(35,40,48,0.5);
+    border-bottom: 1px solid rgba(200,210,224,0.8);
     font-size: 12px;
     transition: background 0.15s;
   }
-  .table-row:hover { background: rgba(255,255,255,0.02); }
+  .table-row:hover { background: rgba(0,0,0,0.02); }
   .table-row:last-child { border-bottom: none; }
 
   .table-num { color: var(--text2); text-align: right; font-size: 11px; }
@@ -338,7 +338,7 @@
   .bond-list-header { display: grid; grid-template-columns: 2fr 1fr 1fr 0.7fr; gap: 8px; padding: 6px 0;
     font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
   .bond-row { display: grid; grid-template-columns: 2fr 1fr 1fr 0.7fr; gap: 8px; padding: 4px 0;
-    border-bottom: 1px solid rgba(35,40,48,0.4); align-items: center; }
+    border-bottom: 1px solid rgba(200,210,224,0.6); align-items: center; }
   .bond-row:last-child { border-bottom: none; }
   .bond-row input { background: transparent; border: none; border-bottom: 1px solid var(--border2);
     color: var(--text); font-family: var(--font-mono); font-size: 11px; padding: 2px 4px; outline: none; width: 100%; }
@@ -383,7 +383,7 @@
     border-radius: 16px;
     width: 100%;
     max-width: 460px;
-    box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.15);
     overflow: hidden;
     animation: cfg-in 0.2s ease;
   }
@@ -497,15 +497,15 @@
   .an-table { width: 100%; border-collapse: collapse; font-size: 11px; }
   .an-table th { padding: 8px 10px; text-align: right; color: var(--text3); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid var(--border); font-weight: 400; }
   .an-table th:first-child { text-align: left; }
-  .an-table td { padding: 9px 10px; text-align: right; border-bottom: 1px solid rgba(35,40,48,0.4); color: var(--text2); }
+  .an-table td { padding: 9px 10px; text-align: right; border-bottom: 1px solid rgba(200,210,224,0.7); color: var(--text2); }
   .an-table td:first-child { text-align: left; color: var(--text); font-weight: 500; }
-  .an-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .an-table tr:hover td { background: rgba(0,0,0,0.02); }
   .an-table tr:last-child td { border-bottom: none; }
   .an-table .pos { color: var(--green); }
   .an-table .neg { color: var(--red); }
   .an-table .gold { color: var(--gold); }
   .an-table .sect-header td { background: rgba(167,139,250,0.06); color: #a78bfa; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; padding: 6px 10px; }
-  .an-table .total-row td { border-top: 1px solid var(--border2); color: var(--text); font-weight: 600; background: rgba(255,255,255,0.02); }
+  .an-table .total-row td { border-top: 1px solid var(--border2); color: var(--text); font-weight: 600; background: rgba(0,0,0,0.02); }
     .kpi-row { grid-template-columns: repeat(2, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
     .chart-card.full-width { grid-column: span 1; }
@@ -520,23 +520,23 @@
 <!-- LOGIN SCREEN -->
 <div id="login-screen" style="
   position:fixed; inset:0; z-index:9999;
-  background:#0a0c10;
+  background:#f2f4f8;
   display:flex; align-items:center; justify-content:center;
 ">
   <div style="
-    background:#111318;
-    border:1px solid #232830;
+    background:#ffffff;
+    border:1px solid #e2e6ef;
     border-radius:16px;
     padding:48px 52px;
     width:100%;
     max-width:400px;
     text-align:center;
-    box-shadow:0 24px 80px rgba(0,0,0,0.6);
+    box-shadow:0 24px 80px rgba(0,0,0,0.12);
   ">
-    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#e8ecf4;margin-bottom:4px;letter-spacing:-0.5px;">
+    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#1a2033;margin-bottom:4px;letter-spacing:-0.5px;">
       SELEMA <span style="color:#4f9eff">INVESTMENTS</span>
     </div>
-    <div style="font-size:11px;color:#535c6e;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:40px;">
+    <div style="font-size:11px;color:#8896aa;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:40px;">
       Painel de Portfólios
     </div>
 
@@ -549,11 +549,11 @@
         autocomplete="username"
         style="
           width:100%;
-          background:#0a0c10;
-          border:1px solid #2d3340;
+          background:#f2f4f8;
+          border:1px solid #cdd3e0;
           border-radius:10px;
           padding:14px 18px;
-          color:#e8ecf4;
+          color:#1a2033;
           font-family:'DM Mono',monospace;
           font-size:15px;
           outline:none;
@@ -562,7 +562,7 @@
           letter-spacing:1px;
         "
         onfocus="this.style.borderColor='#4f9eff'"
-        onblur="this.style.borderColor='#2d3340'"
+        onblur="this.style.borderColor='#cdd3e0'"
       >
     </div>
 
@@ -575,11 +575,11 @@
         autocomplete="current-password"
         style="
           width:100%;
-          background:#0a0c10;
-          border:1px solid #2d3340;
+          background:#f2f4f8;
+          border:1px solid #cdd3e0;
           border-radius:10px;
           padding:14px 48px 14px 18px;
-          color:#e8ecf4;
+          color:#1a2033;
           font-family:'DM Mono',monospace;
           font-size:15px;
           outline:none;
@@ -588,11 +588,11 @@
           letter-spacing:4px;
         "
         onfocus="this.style.borderColor='#4f9eff'"
-        onblur="this.style.borderColor='#2d3340'"
+        onblur="this.style.borderColor='#cdd3e0'"
       >
       <span id="eye-btn" onclick="togglePwd()" style="
         position:absolute;right:14px;top:50%;transform:translateY(-50%);
-        cursor:pointer;color:#535c6e;font-size:16px;user-select:none;
+        cursor:pointer;color:#8896aa;font-size:16px;user-select:none;
       ">👁</span>
     </div>
 
@@ -603,7 +603,7 @@
 
     <button onclick="doLogin()" style="
       width:100%;
-      background:#2563eb;
+      background:#1a6dc7;
       border:none;
       border-radius:10px;
       padding:14px;
@@ -615,13 +615,13 @@
       letter-spacing:0.5px;
       transition:background 0.2s;
     "
-    onmouseover="this.style.background='#4f9eff'"
-    onmouseout="this.style.background='#2563eb'"
+    onmouseover="this.style.background='#1258a8'"
+    onmouseout="this.style.background='#1a6dc7'"
     >
       Acessar Painel
     </button>
 
-    <div style="margin-top:28px;font-size:10px;color:#535c6e;letter-spacing:1px;">
+    <div style="margin-top:28px;font-size:10px;color:#8896aa;letter-spacing:1px;">
       SELEMA INVESTMENTS LTD &nbsp;·&nbsp; Acesso Restrito
     </div>
   </div>
@@ -666,7 +666,7 @@ window._sHash = function(str) {
     setTimeout(() => {
       err.textContent = '';
       fields.forEach(id => {
-        document.getElementById(id).style.borderColor = '#2d3340';
+        document.getElementById(id).style.borderColor = '#cdd3e0';
       });
     }, 2500);
   }
@@ -2558,7 +2558,7 @@ function renderPerfChart() {
     const barH = Math.abs(y - zeroY);
     const barY = d.mtd_return >= 0 ? zeroY - barH : zeroY;
     bars += `<rect x="${x-8}" y="${barY}" width="16" height="${barH}" fill="${color}" rx="2" opacity="0.8"><title>${d.label}: ${fmtPct(d.mtd_return)}</title></rect>`;
-    bars += `<text x="${x}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${d.label.split('/')[0]}</text>`;
+    bars += `<text x="${x}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${d.label.split('/')[0]}</text>`;
   });
   svg.innerHTML = `<line x1="${PAD}" y1="${zeroY}" x2="${W-PAD}" y2="${zeroY}" stroke="#232830" stroke-width="1"/>${bars}`;
 }
@@ -2575,12 +2575,12 @@ function renderNWChart() {
   const toY = (v) => H - PAD - ((v - minV) / (maxV - minV)) * (H - PAD*1.5);
   let pathD = data.map((d,i) => `${i===0?'M':'L'}${toX(i)},${toY(d.net_worth)}`).join(' ');
   let areaD = pathD + ` L${toX(data.length-1)},${H-PAD} L${toX(0)},${H-PAD} Z`;
-  let dots = data.map((d,i) => `<circle cx="${toX(i)}" cy="${toY(d.net_worth)}" r="4" fill="#4f9eff" stroke="#0a0c10" stroke-width="2"><title>${d.label}: ${fmtM(d.net_worth)}</title></circle>`).join('');
-  let labels = data.map((d,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${d.label}</text>`).join('');
+  let dots = data.map((d,i) => `<circle cx="${toX(i)}" cy="${toY(d.net_worth)}" r="4" fill="#4f9eff" stroke="white" stroke-width="2"><title>${d.label}: ${fmtM(d.net_worth)}</title></circle>`).join('');
+  let labels = data.map((d,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${d.label}</text>`).join('');
   let yLabels = '';
   [minV, (minV+maxV)/2, maxV].forEach(v => {
     const y = toY(v);
-    yLabels += `<text x="${PAD-4}" y="${y+4}" text-anchor="end" fill="#535c6e" font-size="9" font-family="DM Mono">$${(v/1e6).toFixed(1)}M</text>`;
+    yLabels += `<text x="${PAD-4}" y="${y+4}" text-anchor="end" fill="#8896aa" font-size="9" font-family="DM Mono">$${(v/1e6).toFixed(1)}M</text>`;
     yLabels += `<line x1="${PAD}" y1="${y}" x2="${W-PAD}" y2="${y}" stroke="#1a1e26" stroke-width="1"/>`;
   });
   svg.innerHTML = `<defs><linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f9eff" stop-opacity="0.3"/><stop offset="100%" stop-color="#4f9eff" stop-opacity="0"/></linearGradient></defs>${yLabels}<path d="${areaD}" fill="url(#nwGrad)"/><path d="${pathD}" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dots}${labels}`;
@@ -2640,12 +2640,12 @@ function renderBradescoNWChart() {
   const toY = (v) => H - PAD - ((v - minV) / (maxV - minV)) * (H - PAD*1.5);
   let pathD = data.map((d,i) => `${i===0?'M':'L'}${toX(i)},${toY(d.net_worth)}`).join(' ');
   let areaD = pathD + ` L${toX(data.length-1)},${H-PAD} L${toX(0)},${H-PAD} Z`;
-  let dots = data.map((d,i) => `<circle cx="${toX(i)}" cy="${toY(d.net_worth)}" r="5" fill="#CC092F" stroke="#0a0c10" stroke-width="2"><title>${d.label}: ${fmtM(d.net_worth)}</title></circle>`).join('');
-  let labels = data.map((d,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${d.label}</text>`).join('');
+  let dots = data.map((d,i) => `<circle cx="${toX(i)}" cy="${toY(d.net_worth)}" r="5" fill="#CC092F" stroke="white" stroke-width="2"><title>${d.label}: ${fmtM(d.net_worth)}</title></circle>`).join('');
+  let labels = data.map((d,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${d.label}</text>`).join('');
   let yLabels = '';
   [minV, (minV+maxV)/2, maxV].forEach(v => {
     const y = toY(v);
-    yLabels += `<text x="${PAD-4}" y="${y+4}" text-anchor="end" fill="#535c6e" font-size="9" font-family="DM Mono">$${(v/1e6).toFixed(1)}M</text>`;
+    yLabels += `<text x="${PAD-4}" y="${y+4}" text-anchor="end" fill="#8896aa" font-size="9" font-family="DM Mono">$${(v/1e6).toFixed(1)}M</text>`;
     yLabels += `<line x1="${PAD}" y1="${y}" x2="${W-PAD}" y2="${y}" stroke="#1a1e26" stroke-width="1"/>`;
   });
   svg.innerHTML = `<defs><linearGradient id="bradGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#CC092F" stop-opacity="0.25"/><stop offset="100%" stop-color="#CC092F" stop-opacity="0"/></linearGradient></defs>${yLabels}<path d="${areaD}" fill="url(#bradGrad)"/><path d="${pathD}" fill="none" stroke="#CC092F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${labels}`;
@@ -2702,12 +2702,12 @@ function renderConsolidatedChart() {
     else lastNull = true;
   });
 
-  let labels = santData.map((d,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${d.label}</text>`).join('');
+  let labels = santData.map((d,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${d.label}</text>`).join('');
 
   let yLabels = '';
   [minV, (minV+maxV)/2, maxV].forEach(v => {
     const y = toY(v);
-    yLabels += `<text x="${PAD-4}" y="${y+4}" text-anchor="end" fill="#535c6e" font-size="9" font-family="DM Mono">$${(v/1e6).toFixed(1)}M</text>`;
+    yLabels += `<text x="${PAD-4}" y="${y+4}" text-anchor="end" fill="#8896aa" font-size="9" font-family="DM Mono">$${(v/1e6).toFixed(1)}M</text>`;
     yLabels += `<line x1="${PAD}" y1="${y}" x2="${W-PAD}" y2="${y}" stroke="#1a1e26" stroke-width="1"/>`;
   });
 
@@ -2903,17 +2903,17 @@ function renderAnPerfChart(months2025, bradMTD) {
     bradPath += (bradPath===''?'M':'L') + toX(si) + ',' + toY(v);
   });
 
-  let xLabels = labels.map((l,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${l}</text>`).join('');
+  let xLabels = labels.map((l,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${l}</text>`).join('');
   let yLine = `<line x1="${PAD}" y1="${zeroY}" x2="${W-PAD}" y2="${zeroY}" stroke="#232830" stroke-width="1"/>`;
   // dots
-  let santDots = santVals.map((v,i) => `<circle cx="${toX(i)}" cy="${toY(v)}" r="4" fill="#ec0000" stroke="#0a0c10" stroke-width="1.5"><title>Santander ${labels[i]}: ${fmtPct(v)}</title></circle>`).join('');
+  let santDots = santVals.map((v,i) => `<circle cx="${toX(i)}" cy="${toY(v)}" r="4" fill="#ec0000" stroke="white" stroke-width="1.5"><title>Santander ${labels[i]}: ${fmtPct(v)}</title></circle>`).join('');
   let bradDots = '';
   bradLabels.forEach((lbl,i) => {
     const si = labels.indexOf(lbl);
     if (si < 0) return;
     const v = bradVals[i];
     if (v == null) return;
-    bradDots += `<circle cx="${toX(si)}" cy="${toY(v)}" r="4" fill="#CC092F" stroke="#0a0c10" stroke-width="1.5"><title>Bradesco ${lbl}: ${fmtPct(v)}</title></circle>`;
+    bradDots += `<circle cx="${toX(si)}" cy="${toY(v)}" r="4" fill="#CC092F" stroke="white" stroke-width="1.5"><title>Bradesco ${lbl}: ${fmtPct(v)}</title></circle>`;
   });
 
   svg.innerHTML = `${yLine}<path d="${santPath}" fill="none" stroke="#ec0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${bradPath?`<path d="${bradPath}" fill="none" stroke="#CC092F" stroke-width="2" stroke-dasharray="4,2" stroke-linecap="round" stroke-linejoin="round"/>`:''}${santDots}${bradDots}${xLabels}`;
@@ -2994,7 +2994,7 @@ function renderAnIncomeChart(svgId, data, color) {
   let bars = data.map((d,i) => {
     const x = toX(i); const barH = (d.value/maxV)*(H-PAD*1.8);
     return `<rect x="${x-10}" y="${H-PAD-barH}" width="20" height="${barH}" fill="${color}" rx="2" opacity="0.85"><title>${d.label}: ${fmt(d.value)}</title></rect>
-    <text x="${x}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${d.label.split('/')[0]}</text>`;
+    <text x="${x}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${d.label.split('/')[0]}</text>`;
   }).join('');
 
   let yLine = `<line x1="${PAD}" y1="${H-PAD}" x2="${W-PAD}" y2="${H-PAD}" stroke="#232830" stroke-width="1"/>`;
@@ -3035,15 +3035,15 @@ function renderAnPnLChart(bradMTD) {
     return `
       <rect x="${x-14}" y="${incY}" width="12" height="${incH}" fill="var(--gold)" rx="2" opacity="0.8"><title>${p.label} Renda: ${fmt(p.income)}</title></rect>
       <rect x="${x+2}" y="${mtmY}" width="12" height="${mtmH}" fill="${p.mtm>=0?'var(--accent)':'var(--red)'}" rx="2" opacity="0.8"><title>${p.label} Marcação: ${fmt(p.mtm)}</title></rect>
-      <circle cx="${x}" cy="${toY(p.variation)}" r="4" fill="var(--green)" stroke="#0a0c10" stroke-width="1.5"><title>${p.label} Total: ${fmt(p.variation)}</title></circle>
-      <text x="${x}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${p.label.split('/')[0]}</text>`;
+      <circle cx="${x}" cy="${toY(p.variation)}" r="4" fill="var(--green)" stroke="white" stroke-width="1.5"><title>${p.label} Total: ${fmt(p.variation)}</title></circle>
+      <text x="${x}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${p.label.split('/')[0]}</text>`;
   }).join('');
 
   let yLine = `<line x1="${PAD}" y1="${zeroY}" x2="${W-PAD}" y2="${zeroY}" stroke="#2d3340" stroke-width="1"/>`;
   // Y axis labels
   let yLabels = '';
   [minV, 0, maxV/2, maxV].forEach(v => {
-    yLabels += `<text x="${PAD-4}" y="${toY(v)+4}" text-anchor="end" fill="#535c6e" font-size="9" font-family="DM Mono">$${(v/1000).toFixed(0)}k</text>`;
+    yLabels += `<text x="${PAD-4}" y="${toY(v)+4}" text-anchor="end" fill="#8896aa" font-size="9" font-family="DM Mono">$${(v/1000).toFixed(0)}k</text>`;
   });
 
   svg.innerHTML = yLine + yLabels + bars;
@@ -3175,10 +3175,10 @@ function renderAnPerfChartYear(santYear, bradYear, bradMTD) {
     bradPath += (bradPath===''?'M':'L') + toX(i) + ',' + toY(v);
   });
 
-  let xLabels = labels.map((l,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${l}</text>`).join('');
+  let xLabels = labels.map((l,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${l}</text>`).join('');
   let zLine = `<line x1="${PAD}" y1="${zeroY}" x2="${W-PAD}" y2="${zeroY}" stroke="#232830" stroke-width="1"/>`;
-  let santDots = santVals.map((v,i) => `<circle cx="${toX(i)}" cy="${toY(v)}" r="4" fill="#ec0000" stroke="#0a0c10" stroke-width="1.5"><title>Santander ${labels[i]}: ${fmtPct(v)}</title></circle>`).join('');
-  let bradDots = bradVals.map((v,i) => v!=null ? `<circle cx="${toX(i)}" cy="${toY(v)}" r="4" fill="#CC092F" stroke="#0a0c10" stroke-width="1.5"><title>Bradesco ${bradYear[i]?.label}: ${fmtPct(v)}</title></circle>` : '').join('');
+  let santDots = santVals.map((v,i) => `<circle cx="${toX(i)}" cy="${toY(v)}" r="4" fill="#ec0000" stroke="white" stroke-width="1.5"><title>Santander ${labels[i]}: ${fmtPct(v)}</title></circle>`).join('');
+  let bradDots = bradVals.map((v,i) => v!=null ? `<circle cx="${toX(i)}" cy="${toY(v)}" r="4" fill="#CC092F" stroke="white" stroke-width="1.5"><title>Bradesco ${bradYear[i]?.label}: ${fmtPct(v)}</title></circle>` : '').join('');
 
   svg.innerHTML = `${zLine}
     <path d="${santPath}" fill="none" stroke="#ec0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -3385,11 +3385,11 @@ function renderPosicoesConsolidado(monthKey, months_order) {
   const makePath = (vals, color, dashed) => {
     const d = vals.map((v,i) => (i===0?'M':'L')+toX(i)+','+toY(v)).join(' ');
     const dots = vals.map((v,i) =>
-      '<circle cx="'+toX(i)+'" cy="'+toY(v)+'" r="'+(months_order[i]===monthKey?5:3)+'" fill="'+color+'" stroke="#0a0c10" stroke-width="1.5"/>').join('');
+      '<circle cx="'+toX(i)+'" cy="'+toY(v)+'" r="'+(months_order[i]===monthKey?5:3)+'" fill="'+color+'" stroke="white" stroke-width="1.5"/>').join('');
     return '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="2"'+(dashed?' stroke-dasharray="5,3"':'')+'/>' + dots;
   };
   const labels = months_order.map((k,i) =>
-    '<text x="'+toX(i)+'" y="'+(H-4)+'" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">'+MONTH_LABELS[k]+'</text>').join('');
+    '<text x="'+toX(i)+'" y="'+(H-4)+'" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">'+MONTH_LABELS[k]+'</text>').join('');
   const legend = '<text x="'+(W-PAD-220)+'" y="18" fill="#ec0000" font-size="10" font-family="DM Mono">-- Santander</text>'
     +'<text x="'+(W-PAD-110)+'" y="18" fill="#fb923c" font-size="10" font-family="DM Mono">-- Bradesco</text>'
     +'<text x="'+(W-PAD)+'" y="18" fill="#4f9eff" font-size="10" font-family="DM Mono" text-anchor="end">-- Consolidado</text>';
@@ -3690,13 +3690,13 @@ function renderAccruedEvolutionChart(months, accrued_data, selectedKey, isSant) 
   let areaD = pathD + ` L${toX(months.length-1)},${H-PAD} L${toX(0)},${H-PAD} Z`;
   let dots = vals.map((v,i) => {
     const isSel = months[i] === selectedKey;
-    return `<circle cx="${toX(i)}" cy="${toY(v)}" r="${isSel?6:4}" fill="${color}" stroke="#0a0c10" stroke-width="2" opacity="${isSel?1:0.7}">
+    return `<circle cx="${toX(i)}" cy="${toY(v)}" r="${isSel?6:4}" fill="${color}" stroke="white" stroke-width="2" opacity="${isSel?1:0.7}">
       <title>${MONTH_LABELS[months[i]]}: ${fmt(v)}</title></circle>`;
   }).join('');
-  let labels = months.map((k,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#535c6e" font-size="9" font-family="DM Mono">${MONTH_LABELS[k]}</text>`).join('');
+  let labels = months.map((k,i) => `<text x="${toX(i)}" y="${H-4}" text-anchor="middle" fill="#8896aa" font-size="9" font-family="DM Mono">${MONTH_LABELS[k]}</text>`).join('');
   let yLabels = [minV,(minV+maxV)/2,maxV].map(v => {
     const y = toY(v);
-    return `<text x="${PAD-6}" y="${y+4}" text-anchor="end" fill="#535c6e" font-size="9" font-family="DM Mono">$${(v/1000).toFixed(0)}k</text>
+    return `<text x="${PAD-6}" y="${y+4}" text-anchor="end" fill="#8896aa" font-size="9" font-family="DM Mono">$${(v/1000).toFixed(0)}k</text>
     <line x1="${PAD}" y1="${y}" x2="${W-PAD}" y2="${y}" stroke="#1a1e26" stroke-width="1"/>`;
   }).join('');
   let valLabels = vals.map((v,i) => `<text x="${toX(i)}" y="${toY(v)-10}" text-anchor="middle" fill="${color}" font-size="9" font-family="DM Mono" font-weight="500">$${(v/1000).toFixed(0)}k</text>`).join('');
@@ -3778,7 +3778,7 @@ function renderPosicoesTable(bonds, prevBonds, isSant, plData) {
   // ── Class row (non-bond assets) ────────────────────────────────
   function classRow(label, color, icon, prevVal, curVal, note) {
     const mtm = (prevVal!==null && curVal!==null) ? curVal - prevVal : null;
-    return `<tr style="background:rgba(255,255,255,0.02)">
+    return `<tr style="background:rgba(0,0,0,0.02)">
       <td style="padding-left:24px;font-size:11px;color:var(--text2)">${icon} ${label}
         ${note?`<span style="font-size:9px;color:var(--text3);margin-left:6px">${note}</span>`:''}
       </td>
@@ -4775,7 +4775,7 @@ function gerarPDFMensal() {
   const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SELEMA Relatorio ' + sLbl + '</title>'
     + '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Segoe UI,Arial,sans-serif;color:#1a1a2e;background:#fff;padding:40px;font-size:13px}'
     + '.hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid #1a1a2e;margin-bottom:24px}'
-    + '.logo{font-size:22px;font-weight:800}.logo span{color:#2563eb}'
+    + '.logo{font-size:22px;font-weight:800}.logo span{color:#1a6dc7}'
     + '.sub{font-size:10px;color:#666;margin-top:3px;letter-spacing:1.5px;text-transform:uppercase}'
     + '.rdate{text-align:right;font-size:11px;color:#888}'
     + '.sec{margin-bottom:24px}.stitle{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e5e7eb}'
@@ -5028,6 +5028,70 @@ function backupJSON() {
   cfgFeedback('Dados JSON exportados.', 'ok');
 }
 
+function handleImportFile(input, mode) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const json = JSON.parse(e.target.result);
+      const result = applyImportData(json, mode);
+      cfgFeedback('Importação concluída: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s).', 'ok');
+    } catch(err) {
+      cfgFeedback('Erro ao importar: ' + err.message, 'err');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function applyImportData(json, mode) {
+  let added = 0, updated = 0;
+
+  function mergeArray(target, source) {
+    if (!Array.isArray(source)) return;
+    source.forEach(entry => {
+      const idx = target.findIndex(d => d.key === entry.key);
+      if (idx >= 0) { target[idx] = entry; updated++; }
+      else { target.push(entry); added++; }
+    });
+    target.sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month);
+  }
+
+  function mergeObj(target, source) {
+    if (source && typeof source === 'object') Object.assign(target, source);
+  }
+
+  if (mode === 'santander' || mode === 'full') {
+    const s = json.santander || json;
+    mergeArray(SANTANDER_DATA, s.data);
+    mergeObj(SANTANDER_ACCRUED, s.accrued);
+    mergeObj(SANTANDER_EXPENSES, s.expenses);
+  }
+
+  if (mode === 'bradesco' || mode === 'full') {
+    const b = json.bradesco || json;
+    mergeArray(BRADESCO_DATA, b.data);
+    mergeObj(BRADESCO_ACCRUED, b.accrued);
+    mergeObj(BRADESCO_INCOME, b.income);
+    mergeObj(BRADESCO_EXPENSES, b.expenses);
+  }
+
+  if (SANTANDER_DATA.length > 0) {
+    const last = SANTANDER_DATA[SANTANDER_DATA.length - 1];
+    selectedSantanderMonth = last.key;
+    santSelectedYear = last.year;
+  }
+  if (BRADESCO_DATA.length > 0) {
+    const last = BRADESCO_DATA[BRADESCO_DATA.length - 1];
+    selectedBradescoMonth = last.key;
+    bradSelectedYear = last.year;
+  }
+
+  init();
+  return { added, updated };
+}
+
 // Fecha ao clicar no overlay (fora do modal)
 document.getElementById('cfg-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeSettings();
@@ -5060,6 +5124,7 @@ document.addEventListener('keydown', function(e) {
     <div class="cfg-tabs">
       <button class="cfg-tab active" data-tab="security" onclick="switchCfgTab('security')">Segurança</button>
       <button class="cfg-tab" data-tab="backup" onclick="switchCfgTab('backup')">Backup</button>
+      <button class="cfg-tab" data-tab="import" onclick="switchCfgTab('import')">Importar</button>
     </div>
 
     <div class="cfg-body">
@@ -5110,6 +5175,37 @@ document.addEventListener('keydown', function(e) {
         <button class="cfg-secondary-btn gold-hover" onclick="backupJSON()" style="margin-top:10px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exportar dados (.json)
+        </button>
+      </div>
+
+      <!-- TAB: IMPORTAR -->
+      <div class="cfg-tab-panel" data-panel="import">
+        <div class="cfg-label">Importar Portfólio Santander</div>
+        <div class="cfg-info">Selecione o arquivo JSON exportado do Santander. Novos meses serão adicionados; meses existentes serão atualizados.</div>
+        <input type="file" id="import-sant-file" accept=".json" style="display:none" onchange="handleImportFile(this, 'santander')">
+        <button class="cfg-secondary-btn" onclick="document.getElementById('import-sant-file').click()" style="margin-top:10px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Importar Santander (.json)
+        </button>
+
+        <hr class="cfg-divider">
+
+        <div class="cfg-label">Importar Portfólio Bradesco</div>
+        <div class="cfg-info">Selecione o arquivo JSON exportado do Bradesco. Novos meses serão adicionados; meses existentes serão atualizados.</div>
+        <input type="file" id="import-brad-file" accept=".json" style="display:none" onchange="handleImportFile(this, 'bradesco')">
+        <button class="cfg-secondary-btn" onclick="document.getElementById('import-brad-file').click()" style="margin-top:10px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Importar Bradesco (.json)
+        </button>
+
+        <hr class="cfg-divider">
+
+        <div class="cfg-label">Importar Ambos (arquivo completo)</div>
+        <div class="cfg-info">Arquivo JSON completo exportado com "Exportar dados (.json)", contendo Santander e Bradesco juntos.</div>
+        <input type="file" id="import-full-file" accept=".json" style="display:none" onchange="handleImportFile(this, 'full')">
+        <button class="cfg-secondary-btn gold-hover" onclick="document.getElementById('import-full-file').click()" style="margin-top:10px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Importar completo (.json)
         </button>
       </div>
 
