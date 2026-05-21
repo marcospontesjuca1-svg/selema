@@ -5080,7 +5080,7 @@ function handleImportFile(input, mode) {
         else throw new Error('Selecione Santander ou Bradesco para importar PDF');
         const result = applyImportData(parsed, mode);
         cfgFeedback('PDF importado: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s).', 'ok');
-        saveImportToStorage(parsed, mode);
+        saveImportToStorage();
       } catch(err) {
         cfgFeedback('Erro no PDF: ' + err.message, 'err');
       }
@@ -5094,7 +5094,7 @@ function handleImportFile(input, mode) {
       const json = JSON.parse(e.target.result);
       const result = applyImportData(json, mode);
       cfgFeedback('Importação concluída: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s).', 'ok');
-      saveImportToStorage(json, mode);
+      saveImportToStorage();
     } catch(err) {
       cfgFeedback('Erro ao importar: ' + err.message, 'err');
     }
@@ -5152,32 +5152,25 @@ function applyImportData(json, mode) {
 // ===== PERSISTÊNCIA DE IMPORTAÇÕES =====
 var IMPORT_STORE_KEY = 'selema_imports';
 
-function saveImportToStorage(parsed, mode) {
-  const stored = JSON.parse(localStorage.getItem(IMPORT_STORE_KEY) || '{}');
-  function mergeStored(dest, src) {
-    if (!src) return;
-    if (Array.isArray(src.data)) {
-      if (!dest.data) dest.data = [];
-      src.data.forEach(entry => {
-        const idx = dest.data.findIndex(d => d.key === entry.key);
-        if (idx >= 0) dest.data[idx] = entry;
-        else dest.data.push(entry);
-      });
-      dest.data.sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month);
-    }
-    if (src.expenses) Object.assign(dest.expenses = dest.expenses || {}, src.expenses);
-    if (src.income)   Object.assign(dest.income   = dest.income   || {}, src.income);
-    if (src.accrued)  Object.assign(dest.accrued  = dest.accrued  || {}, src.accrued);
+function saveImportToStorage() {
+  try {
+    const snapshot = {
+      santander: {
+        data:     SANTANDER_DATA,
+        accrued:  SANTANDER_ACCRUED,
+        expenses: SANTANDER_EXPENSES
+      },
+      bradesco: {
+        data:     BRADESCO_DATA,
+        income:   BRADESCO_INCOME,
+        accrued:  BRADESCO_ACCRUED,
+        expenses: BRADESCO_EXPENSES
+      }
+    };
+    localStorage.setItem(IMPORT_STORE_KEY, JSON.stringify(snapshot));
+  } catch(e) {
+    console.warn('selema: erro ao salvar importações', e);
   }
-  if (mode === 'santander' || mode === 'full') {
-    if (!stored.santander) stored.santander = {};
-    mergeStored(stored.santander, parsed.santander || parsed);
-  }
-  if (mode === 'bradesco' || mode === 'full') {
-    if (!stored.bradesco) stored.bradesco = {};
-    mergeStored(stored.bradesco, parsed.bradesco || parsed);
-  }
-  localStorage.setItem(IMPORT_STORE_KEY, JSON.stringify(stored));
 }
 
 function loadPersistedImports() {
@@ -5185,12 +5178,8 @@ function loadPersistedImports() {
   if (!raw) return;
   try {
     const stored = JSON.parse(raw);
-    if (stored.santander && (stored.santander.data?.length || Object.keys(stored.santander.expenses || {}).length)) {
-      applyImportData(stored.santander, 'santander');
-    }
-    if (stored.bradesco && (stored.bradesco.data?.length || Object.keys(stored.bradesco.income || {}).length)) {
-      applyImportData(stored.bradesco, 'bradesco');
-    }
+    if (stored.santander) applyImportData(stored.santander, 'santander');
+    if (stored.bradesco)  applyImportData(stored.bradesco,  'bradesco');
   } catch(e) {
     console.warn('selema: erro ao carregar importações salvas', e);
   }
