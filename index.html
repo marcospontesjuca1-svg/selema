@@ -810,21 +810,28 @@ window._sHash = function(str) {
         <div class="kpi-sub" id="brad-nw-var">—</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Bonds</div>
-        <div class="kpi-value" id="brad-bonds" style="font-size:20px">—</div>
-        <div class="kpi-sub" id="brad-bonds-pct">—</div>
+        <div class="kpi-label">Retorno no Mês</div>
+        <div class="kpi-value" id="brad-mtd-kpi">—</div>
+        <div class="kpi-sub">Mês corrente</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Fundos Mútuos</div>
-        <div class="kpi-value" id="brad-funds" style="font-size:20px">—</div>
-        <div class="kpi-sub" id="brad-funds-pct">—</div>
+        <div class="kpi-label">Retorno YTD</div>
+        <div class="kpi-value" id="brad-ytd-kpi">—</div>
+        <div class="kpi-sub">Acumulado no ano</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Structured Notes</div>
-        <div class="kpi-value gold" id="brad-notes" style="font-size:20px">—</div>
-        <div class="kpi-sub" id="brad-notes-pct">—</div>
+        <div class="kpi-label">Renda (Cupons)</div>
+        <div class="kpi-value gold" id="brad-income-kpi">—</div>
+        <div class="kpi-sub" id="brad-income-kpi-sub">No período</div>
       </div>
     </div>
+    <!-- hidden elements kept for backward compat with renderBradesco internals -->
+    <span id="brad-bonds" style="display:none"></span>
+    <span id="brad-bonds-pct" style="display:none"></span>
+    <span id="brad-funds" style="display:none"></span>
+    <span id="brad-funds-pct" style="display:none"></span>
+    <span id="brad-notes" style="display:none"></span>
+    <span id="brad-notes-pct" style="display:none"></span>
 
     <!-- Bradesco Composition Detail -->
     <div class="chart-card" style="margin-bottom:24px">
@@ -2596,35 +2603,62 @@ function renderBradesco(monthKey) {
   document.getElementById('brad-nw').textContent = fmtM(d.net_worth);
 
   const varEl = document.getElementById('brad-nw-var');
-  if (d.variation != null) {
+  if (d.variation != null && d.variation !== 0) {
     varEl.textContent = (d.variation >= 0 ? '▲ +' : '▼ ') + fmt(d.variation) + ' no mês';
     varEl.style.color = d.variation >= 0 ? 'var(--green)' : 'var(--red)';
-  } else { varEl.textContent = 'Período base'; varEl.style.color = 'var(--text3)'; }
+  } else { varEl.textContent = '—'; varEl.style.color = 'var(--text3)'; }
 
+  // MTD% — computed from variation
+  const mtdEl = document.getElementById('brad-mtd-kpi');
+  if (d.variation && d.net_worth && d.variation !== 0) {
+    const prevNW = d.net_worth - d.variation;
+    const mtd = prevNW > 0 ? (d.variation / prevNW) * 100 : 0;
+    mtdEl.textContent = fmtPct(mtd);
+    mtdEl.className = 'kpi-value ' + (mtd >= 0 ? 'green' : 'red');
+  } else { mtdEl.textContent = '—'; mtdEl.className = 'kpi-value'; }
+
+  // YTD% — computed vs Dec of previous year
+  const ytdEl = document.getElementById('brad-ytd-kpi');
+  const base = BRADESCO_DATA.find(b => b.year === d.year - 1 && b.month === 12);
+  if (base && base.net_worth) {
+    const ytd = ((d.net_worth - base.net_worth) / base.net_worth) * 100;
+    ytdEl.textContent = fmtPct(ytd);
+    ytdEl.className = 'kpi-value ' + (ytd >= 0 ? 'green' : 'red');
+  } else { ytdEl.textContent = '—'; ytdEl.className = 'kpi-value'; }
+
+  // Renda (income for this month)
+  const income = BRADESCO_INCOME[d.key] || 0;
+  const incEl = document.getElementById('brad-income-kpi');
+  incEl.textContent = income > 0 ? fmt(income) : '—';
+  const incSub = document.getElementById('brad-income-kpi-sub');
+  if (incSub) incSub.textContent = income > 0 ? 'Cupons creditados no mês' : 'No período';
+
+  // Keep existing hidden elements populated (backward compat)
   if (d.bonds) {
-    document.getElementById('brad-bonds').textContent = fmtM(d.bonds);
-    document.getElementById('brad-bonds-pct').textContent = d.bonds_pct ? `${d.bonds_pct.toFixed(1)}% do portfólio` : '—';
-    document.getElementById('brad-funds').textContent = fmtM(d.mutual_funds);
-    document.getElementById('brad-funds-pct').textContent = d.mutual_funds_pct ? `${d.mutual_funds_pct.toFixed(1)}% do portfólio` : '—';
-    document.getElementById('brad-notes').textContent = fmtM(d.structured_notes);
-    document.getElementById('brad-notes-pct').textContent = d.notes_pct ? `${d.notes_pct.toFixed(1)}% do portfólio` : '—';
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('brad-bonds', fmtM(d.bonds));
+    set('brad-bonds-pct', d.bonds_pct ? `${d.bonds_pct.toFixed(1)}% do portfólio` : '—');
+    set('brad-funds', fmtM(d.mutual_funds));
+    set('brad-funds-pct', d.mutual_funds_pct ? `${d.mutual_funds_pct.toFixed(1)}% do portfólio` : '—');
+    set('brad-notes', fmtM(d.structured_notes));
+    set('brad-notes-pct', d.notes_pct ? `${d.notes_pct.toFixed(1)}% do portfólio` : '—');
 
-    // Allocation bar for Bradesco
+    // Allocation bar
     const items = [
-      { label: 'Caixa', pct: d.cash_pct || 0, color: '#f5c842' },
-      { label: 'Bonds', pct: d.bonds_pct || 0, color: '#CC092F' },
-      { label: 'Fundos', pct: d.mutual_funds_pct || 0, color: '#4f9eff' },
-      { label: 'Str. Notes', pct: d.notes_pct || 0, color: '#22d3a0' },
-      { label: 'Equities', pct: d.equities_pct || 0, color: '#f97316' },
+      { label: 'Caixa',      pct: d.cash_pct || 0,         color: '#f5c842' },
+      { label: 'Bonds',      pct: d.bonds_pct || 0,        color: '#CC092F' },
+      { label: 'Fundos',     pct: d.mutual_funds_pct || 0, color: '#4f9eff' },
+      { label: 'Str. Notes', pct: d.notes_pct || 0,        color: '#22d3a0' },
+      { label: 'Equities',   pct: d.equities_pct || 0,     color: '#f97316' },
     ];
-    document.getElementById('brad-alloc-bar').innerHTML = items.map(i => `<div class="alloc-segment" style="width:${i.pct}%;background:${i.color}"></div>`).join('');
-    document.getElementById('brad-alloc-legend').innerHTML = items.map(i => `<span><span class="alloc-dot" style="background:${i.color}"></span>${i.label}: ${i.pct.toFixed(1)}%</span>`).join('');
-  } else {
-    ['brad-bonds','brad-funds','brad-notes'].forEach(id => document.getElementById(id).textContent = '—');
-    ['brad-bonds-pct','brad-funds-pct','brad-notes-pct'].forEach(id => document.getElementById(id).textContent = 'Dados parciais');
+    document.getElementById('brad-alloc-bar').innerHTML =
+      items.map(i => `<div class="alloc-segment" style="width:${i.pct}%;background:${i.color}"></div>`).join('');
+    document.getElementById('brad-alloc-legend').innerHTML =
+      items.map(i => `<span><span class="alloc-dot" style="background:${i.color}"></span>${i.label}: ${i.pct.toFixed(1)}%</span>`).join('');
   }
 
-  document.getElementById('brad-period').textContent = `${BRADESCO_DATA[0].label} — ${BRADESCO_DATA[BRADESCO_DATA.length-1].label}`;
+  document.getElementById('brad-period').textContent =
+    `${BRADESCO_DATA[0].label} — ${BRADESCO_DATA[BRADESCO_DATA.length-1].label}`;
   renderBradAnnual();
 }
 
@@ -4859,6 +4893,7 @@ function init() {
 }
 
 init();
+loadPersistedImports();
 
 // ===========================
 // SETTINGS PANEL
@@ -5045,6 +5080,7 @@ function handleImportFile(input, mode) {
         else throw new Error('Selecione Santander ou Bradesco para importar PDF');
         const result = applyImportData(parsed, mode);
         cfgFeedback('PDF importado: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s).', 'ok');
+        saveImportToStorage(parsed, mode);
       } catch(err) {
         cfgFeedback('Erro no PDF: ' + err.message, 'err');
       }
@@ -5058,6 +5094,7 @@ function handleImportFile(input, mode) {
       const json = JSON.parse(e.target.result);
       const result = applyImportData(json, mode);
       cfgFeedback('Importação concluída: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s).', 'ok');
+      saveImportToStorage(json, mode);
     } catch(err) {
       cfgFeedback('Erro ao importar: ' + err.message, 'err');
     }
@@ -5110,6 +5147,53 @@ function applyImportData(json, mode) {
 
   init();
   return { added, updated };
+}
+
+// ===== PERSISTÊNCIA DE IMPORTAÇÕES =====
+const IMPORT_STORE_KEY = 'selema_imports';
+
+function saveImportToStorage(parsed, mode) {
+  const stored = JSON.parse(localStorage.getItem(IMPORT_STORE_KEY) || '{}');
+  function mergeStored(dest, src) {
+    if (!src) return;
+    if (Array.isArray(src.data)) {
+      if (!dest.data) dest.data = [];
+      src.data.forEach(entry => {
+        const idx = dest.data.findIndex(d => d.key === entry.key);
+        if (idx >= 0) dest.data[idx] = entry;
+        else dest.data.push(entry);
+      });
+      dest.data.sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month);
+    }
+    if (src.expenses) Object.assign(dest.expenses = dest.expenses || {}, src.expenses);
+    if (src.income)   Object.assign(dest.income   = dest.income   || {}, src.income);
+    if (src.accrued)  Object.assign(dest.accrued  = dest.accrued  || {}, src.accrued);
+  }
+  if (mode === 'santander' || mode === 'full') {
+    if (!stored.santander) stored.santander = {};
+    mergeStored(stored.santander, parsed.santander || parsed);
+  }
+  if (mode === 'bradesco' || mode === 'full') {
+    if (!stored.bradesco) stored.bradesco = {};
+    mergeStored(stored.bradesco, parsed.bradesco || parsed);
+  }
+  localStorage.setItem(IMPORT_STORE_KEY, JSON.stringify(stored));
+}
+
+function loadPersistedImports() {
+  const raw = localStorage.getItem(IMPORT_STORE_KEY);
+  if (!raw) return;
+  try {
+    const stored = JSON.parse(raw);
+    if (stored.santander && (stored.santander.data?.length || Object.keys(stored.santander.expenses || {}).length)) {
+      applyImportData(stored.santander, 'santander');
+    }
+    if (stored.bradesco && (stored.bradesco.data?.length || Object.keys(stored.bradesco.income || {}).length)) {
+      applyImportData(stored.bradesco, 'bradesco');
+    }
+  } catch(e) {
+    console.warn('selema: erro ao carregar importações salvas', e);
+  }
 }
 
 // ===== PDF IMPORT =====
@@ -5215,10 +5299,24 @@ function parseSantanderPDF(pages) {
     }
   }
 
+  // Accrued interest: sum from bond position lines
+  // Pattern: RATE FREQ NOMINAL USD DATE MARKET_VALUE ACCRUED DURATION TOTAL PCT%
+  let totalAccrued = 0;
+  const accRe = /([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+[\d.]+\s+([\d,]+\.\d{2})\s+[\d.]+%\s*$/;
+  for (const l of all) {
+    const m = l.match(accRe);
+    if (!m) continue;
+    const mv  = parseUSNum(m[1]);
+    const acc = parseUSNum(m[2]);
+    const tot = parseUSNum(m[3]);
+    if (acc >= 0 && Math.abs(mv + acc - tot) < 2) totalAccrued += acc;
+  }
+
   return {
     data: [{ key, label, month: mthNum, year: yr4, net_worth, mtd_return: mtd, ytd_return: ytd,
       variation, short_term_pct: st_pct, fixed_income_pct: fi_pct, equities_pct: eq_pct,
       coupons, dividends: 0 }],
+    accrued:  totalAccrued > 0 ? { [key]: { total: Math.round(totalAccrued * 100) / 100 } } : undefined,
     expenses: { [key]: { custodia: 0, comissao: 0, iof: 0, cambio: 0, outras } }
   };
 }
@@ -5291,11 +5389,24 @@ function parseBradescoPDF(pages) {
     if (last.key !== key && last.net_worth) variation = Math.round((net_worth - last.net_worth) * 100) / 100;
   }
 
+  // Bradesco accrued: EU-format pattern — MV ACCRUED DATE TOTAL PCT
+  let bradAccrued = 0;
+  const bradAccRe = /([\d.]+,\d{2})\s+([\d.]+,\d{2})\s+\d{2}\/\d{2}\/\d{2}\s+([\d.]+,\d{2})\s+[\d,]+$/;
+  for (const l of all) {
+    const m = l.match(bradAccRe);
+    if (!m) continue;
+    const mv  = parseEUNum(m[1]);
+    const acc = parseEUNum(m[2]);
+    const tot = parseEUNum(m[3]);
+    if (acc > 0 && Math.abs(mv + acc - tot) < 2) bradAccrued += acc;
+  }
+
   return {
     data: [{ key, label, month: mthNum, year: yr4, net_worth, cash, equities, bonds,
       mutual_funds, structured_notes, cash_pct, equities_pct: eq_pct, bonds_pct,
       mutual_funds_pct: mf_pct, notes_pct, variation }],
-    income: { [key]: Math.round(income * 100) / 100 },
+    accrued:  bradAccrued > 0 ? { [key]: { total: Math.round(bradAccrued * 100) / 100 } } : undefined,
+    income:   { [key]: Math.round(income * 100) / 100 },
     expenses: { [key]: { custodia: 0, comissao: Math.round(comissao * 100) / 100, iof: 0, cambio: 0, outras: 0 } }
   };
 }
