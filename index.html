@@ -4892,6 +4892,7 @@ function init() {
   renderSantAnnual(santSelectedYear);
 }
 
+var IMPORT_STORE_KEY = 'selema_imports';
 init();
 loadPersistedImports();
 
@@ -5150,7 +5151,6 @@ function applyImportData(json, mode) {
 }
 
 // ===== PERSISTÊNCIA DE IMPORTAÇÕES =====
-var IMPORT_STORE_KEY = 'selema_imports';
 
 function saveImportToStorage() {
   try {
