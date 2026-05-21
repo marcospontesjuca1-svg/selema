@@ -2776,8 +2776,16 @@ function setQuery(q) {
 async function askAI() {
   const query = document.getElementById('ai-query').value.trim();
   if (!query) return;
+  const apiKey = localStorage.getItem('selema_ai_key');
   const btn = document.getElementById('ai-btn');
   const responseEl = document.getElementById('ai-response');
+
+  if (!apiKey) {
+    responseEl.className = 'ai-response visible';
+    responseEl.textContent = 'Chave da API não configurada. Acesse Configurações → IA para inserir sua chave Anthropic.';
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = 'Consultando...';
   responseEl.className = 'ai-response visible';
@@ -2787,9 +2795,14 @@ async function askAI() {
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 1000,
         system: `Você é um analista financeiro especializado em portfólios de investimento.
 Responda em português do Brasil de forma clara e objetiva.
@@ -2800,11 +2813,15 @@ Seja conciso mas completo. Use ▲ para crescimento e ▼ para queda quando rele
       })
     });
     const data = await response.json();
-    const text = data.content.map(i => i.text || '').join('');
-    responseEl.innerHTML = '';
-    responseEl.textContent = text;
+    if (data.error) {
+      responseEl.textContent = 'Erro da API: ' + (data.error.message || JSON.stringify(data.error));
+    } else {
+      const text = (data.content || []).map(i => i.text || '').join('');
+      responseEl.innerHTML = '';
+      responseEl.textContent = text || 'Sem resposta.';
+    }
   } catch(e) {
-    responseEl.textContent = 'Erro ao consultar. Verifique sua conexão e tente novamente.';
+    responseEl.textContent = 'Erro ao consultar: ' + e.message;
   }
   btn.disabled = false;
   btn.textContent = 'Perguntar';
@@ -4922,6 +4939,36 @@ function switchCfgTab(tab) {
   document.querySelectorAll('.cfg-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.cfg-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
   cfgFeedback('', null);
+  if (tab === 'ai') {
+    const stored = localStorage.getItem('selema_ai_key') || '';
+    document.getElementById('cfg-ai-key').value = stored ? '••••••••' + stored.slice(-6) : '';
+    const st = document.getElementById('cfg-ai-key-status');
+    if (stored) {
+      st.style.display = 'block';
+      st.textContent = 'Chave configurada. Para alterar, apague o campo e insira a nova chave.';
+    } else {
+      st.style.display = 'none';
+    }
+  }
+}
+
+function saveAIKey() {
+  const val = document.getElementById('cfg-ai-key').value.trim();
+  if (!val || val.startsWith('••')) { cfgFeedback('Insira a chave completa (sk-ant-…).', 'err'); return; }
+  if (!val.startsWith('sk-ant-')) { cfgFeedback('Chave inválida — deve começar com sk-ant-.', 'err'); return; }
+  localStorage.setItem('selema_ai_key', val);
+  document.getElementById('cfg-ai-key').value = '••••••••' + val.slice(-6);
+  const st = document.getElementById('cfg-ai-key-status');
+  st.style.display = 'block';
+  st.textContent = 'Chave configurada. Para alterar, apague o campo e insira a nova chave.';
+  cfgFeedback('Chave salva com sucesso.', 'ok');
+}
+
+function clearAIKey() {
+  localStorage.removeItem('selema_ai_key');
+  document.getElementById('cfg-ai-key').value = '';
+  document.getElementById('cfg-ai-key-status').style.display = 'none';
+  cfgFeedback('Chave removida.', 'ok');
 }
 
 function cfgFeedback(msg, type) {
@@ -5433,6 +5480,7 @@ document.addEventListener('keydown', function(e) {
       <button class="cfg-tab active" data-tab="security" onclick="switchCfgTab('security')">Segurança</button>
       <button class="cfg-tab" data-tab="backup" onclick="switchCfgTab('backup')">Backup</button>
       <button class="cfg-tab" data-tab="import" onclick="switchCfgTab('import')">Importar</button>
+      <button class="cfg-tab" data-tab="ai" onclick="switchCfgTab('ai')">IA</button>
     </div>
 
     <div class="cfg-body">
@@ -5515,6 +5563,18 @@ document.addEventListener('keydown', function(e) {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Importar completo (.json)
         </button>
+      </div>
+
+      <!-- TAB: IA -->
+      <div class="cfg-tab-panel" data-panel="ai">
+        <div class="cfg-label">Chave da API Anthropic</div>
+        <div class="cfg-info">Para usar a Consulta Inteligente AI, insira sua chave de API da Anthropic (<span style="font-family:var(--font-mono);color:var(--accent);">sk-ant-…</span>). A chave é salva apenas localmente neste navegador e nunca é enviada para terceiros.</div>
+        <input id="cfg-ai-key" class="cfg-input" type="password" placeholder="sk-ant-api03-…" autocomplete="off" style="margin-top:10px;font-family:var(--font-mono);font-size:11px;">
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="cfg-primary-btn" style="flex:1" onclick="saveAIKey()">Salvar chave</button>
+          <button class="cfg-secondary-btn" onclick="clearAIKey()">Remover</button>
+        </div>
+        <div id="cfg-ai-key-status" class="cfg-info" style="margin-top:10px;display:none;"></div>
       </div>
 
       <!-- Feedback único fora das tabs -->
