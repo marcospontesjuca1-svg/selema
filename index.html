@@ -5150,7 +5150,7 @@ function applyImportData(json, mode) {
 }
 
 // ===== PERSISTÊNCIA DE IMPORTAÇÕES =====
-const IMPORT_STORE_KEY = 'selema_imports';
+var IMPORT_STORE_KEY = 'selema_imports';
 
 function saveImportToStorage(parsed, mode) {
   const stored = JSON.parse(localStorage.getItem(IMPORT_STORE_KEY) || '{}');
