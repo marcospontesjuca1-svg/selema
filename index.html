@@ -5124,24 +5124,48 @@ async function publishToGitHub() {
   cfgFeedback('Publicando no GitHub Pages…', 'ok');
   try {
     const headers = { 'Authorization': 'token ' + cfg.token, 'Accept': 'application/vnd.github.v3+json' };
-    const r = await fetch('https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path + '?ref=' + cfg.branch, { headers });
-    const file = await r.json();
-    if (!file.sha) throw new Error(file.message || 'Arquivo não encontrado no repositório');
+    const apiUrl = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path;
+
+    // Build content first, then fetch SHA immediately before PUT (minimises mismatch window)
     const html = await getEmbedHtml();
     const enc = new TextEncoder();
     const bytes = enc.encode(html);
     let bin = '';
     bytes.forEach(b => bin += String.fromCharCode(b));
     const content = btoa(bin);
+
+    // Fetch SHA fresh, no cache
+    const r = await fetch(apiUrl + '?ref=' + cfg.branch + '&_=' + Date.now(), { headers, cache: 'no-store' });
+    const file = await r.json();
+    if (!file.sha) throw new Error(file.message || 'Arquivo não encontrado no repositório');
+
     const now = new Date().toISOString().slice(0, 7);
-    const put = await fetch('https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path, {
-      method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+    const put = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
       body: JSON.stringify({ message: 'dados: ' + now, content, sha: file.sha, branch: cfg.branch })
     });
     const result = await put.json();
     if (result.content) {
       cfgFeedback('✓ Publicado no GitHub Pages! Atualiza em ~1 minuto.', 'ok');
     } else {
+      // SHA changed under us — retry once with fresh SHA
+      if (result.message && result.message.includes('does not match')) {
+        const r2 = await fetch(apiUrl + '?ref=' + cfg.branch + '&_=' + Date.now(), { headers, cache: 'no-store' });
+        const file2 = await r2.json();
+        if (!file2.sha) throw new Error('Retry: arquivo não encontrado');
+        const put2 = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+          body: JSON.stringify({ message: 'dados: ' + now, content, sha: file2.sha, branch: cfg.branch })
+        });
+        const result2 = await put2.json();
+        if (result2.content) {
+          cfgFeedback('✓ Publicado no GitHub Pages! Atualiza em ~1 minuto.', 'ok');
+          return;
+        }
+        throw new Error(result2.message || JSON.stringify(result2));
+      }
       throw new Error(result.message || JSON.stringify(result));
     }
   } catch(e) {
