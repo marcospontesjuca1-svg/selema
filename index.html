@@ -4939,6 +4939,13 @@ function switchCfgTab(tab) {
   document.querySelectorAll('.cfg-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.cfg-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
   cfgFeedback('', null);
+  if (tab === 'publish') {
+    const cfg = getGHConfig();
+    document.getElementById('cfg-gh-token').value  = cfg.token ? '••••••••' + cfg.token.slice(-6) : '';
+    document.getElementById('cfg-gh-owner').value  = cfg.owner;
+    document.getElementById('cfg-gh-repo').value   = cfg.repo;
+    document.getElementById('cfg-gh-branch').value = cfg.branch;
+  }
   if (tab === 'ai') {
     const stored = localStorage.getItem('selema_ai_key') || '';
     document.getElementById('cfg-ai-key').value = stored ? '••••••••' + stored.slice(-6) : '';
@@ -5052,19 +5059,25 @@ function resetPassword() {
   cfgFeedback('Login e senha redefinidos para o padrão.', 'ok');
 }
 
+function embedData(html) {
+  const snapshot = {
+    santander: { data: SANTANDER_DATA, accrued: SANTANDER_ACCRUED, expenses: SANTANDER_EXPENSES },
+    bradesco:  { data: BRADESCO_DATA,  accrued: BRADESCO_ACCRUED,  income: BRADESCO_INCOME, expenses: BRADESCO_EXPENSES }
+  };
+  const safe = JSON.stringify(snapshot).replace(/<\//g, '<\\/');
+  const inj = '\n<script>(function(){try{var d=' + safe + ';applyImportData(d.santander,"santander");applyImportData(d.bradesco,"bradesco");saveImportToStorage();}catch(e){console.warn("selema backup",e);}})();<\/script>\n';
+  return html.replace('</body>', inj + '</body>');
+}
+
+function getEmbedHtml() {
+  return fetch(location.href)
+    .then(r => r.ok ? r.text() : Promise.reject())
+    .then(html => embedData(html))
+    .catch(() => embedData('<!DOCTYPE html>\n' + document.documentElement.outerHTML));
+}
+
 function backupHTML() {
-  function embedData(html) {
-    const snapshot = {
-      santander: { data: SANTANDER_DATA, accrued: SANTANDER_ACCRUED, expenses: SANTANDER_EXPENSES },
-      bradesco:  { data: BRADESCO_DATA,  accrued: BRADESCO_ACCRUED,  income: BRADESCO_INCOME, expenses: BRADESCO_EXPENSES }
-    };
-    const safe = JSON.stringify(snapshot).replace(/<\//g, '<\\/');
-    const inj = '\n<script>(function(){try{var d=' + safe + ';applyImportData(d.santander,"santander");applyImportData(d.bradesco,"bradesco");saveImportToStorage();}catch(e){console.warn("selema backup",e);}})();<\/script>\n';
-    return html.replace('</body>', inj + '</body>');
-  }
-
   const filename = 'SELEMA_painel.html';
-
   function download(html) {
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url  = URL.createObjectURL(blob);
@@ -5076,14 +5089,62 @@ function backupHTML() {
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     cfgFeedback('SELEMA_painel.html baixado com todos os dados. Use sempre este arquivo.', 'ok');
   }
+  getEmbedHtml().then(download);
+}
 
-  fetch(location.href)
-    .then(r => r.text())
-    .then(html => download(embedData(html)))
-    .catch(() => {
-      const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-      download(embedData(html));
+function getGHConfig() {
+  return {
+    token:  localStorage.getItem('selema_gh_token')  || '',
+    owner:  localStorage.getItem('selema_gh_owner')  || 'marcospontesjuca1-svg',
+    repo:   localStorage.getItem('selema_gh_repo')   || 'selema',
+    branch: localStorage.getItem('selema_gh_branch') || 'main',
+    path:   'index.html'
+  };
+}
+
+function saveGHConfig() {
+  const token  = document.getElementById('cfg-gh-token').value.trim();
+  const owner  = document.getElementById('cfg-gh-owner').value.trim();
+  const repo   = document.getElementById('cfg-gh-repo').value.trim();
+  const branch = document.getElementById('cfg-gh-branch').value.trim();
+  if (!token) { cfgFeedback('Insira o token GitHub.', 'err'); return; }
+  localStorage.setItem('selema_gh_token',  token);
+  localStorage.setItem('selema_gh_owner',  owner  || 'marcospontesjuca1-svg');
+  localStorage.setItem('selema_gh_repo',   repo   || 'selema');
+  localStorage.setItem('selema_gh_branch', branch || 'main');
+  document.getElementById('cfg-gh-token').value = '••••••••' + token.slice(-6);
+  cfgFeedback('Configuração GitHub salva. Próxima importação publicará automaticamente.', 'ok');
+}
+
+async function publishToGitHub() {
+  const cfg = getGHConfig();
+  if (!cfg.token) { cfgFeedback('Configure o token GitHub em Configurações → Publicar.', 'err'); return; }
+  cfgFeedback('Publicando no GitHub Pages…', 'ok');
+  try {
+    const headers = { 'Authorization': 'token ' + cfg.token, 'Accept': 'application/vnd.github.v3+json' };
+    const r = await fetch('https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path + '?ref=' + cfg.branch, { headers });
+    const file = await r.json();
+    if (!file.sha) throw new Error(file.message || 'Arquivo não encontrado no repositório');
+    const html = await getEmbedHtml();
+    const enc = new TextEncoder();
+    const bytes = enc.encode(html);
+    let bin = '';
+    bytes.forEach(b => bin += String.fromCharCode(b));
+    const content = btoa(bin);
+    const now = new Date().toISOString().slice(0, 7);
+    const put = await fetch('https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path, {
+      method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+      body: JSON.stringify({ message: 'dados: ' + now, content, sha: file.sha, branch: cfg.branch })
     });
+    const result = await put.json();
+    if (result.content) {
+      cfgFeedback('✓ Publicado no GitHub Pages! Atualiza em ~1 minuto.', 'ok');
+    } else {
+      throw new Error(result.message || JSON.stringify(result));
+    }
+  } catch(e) {
+    cfgFeedback('Erro ao publicar: ' + e.message, 'err');
+  }
 }
 
 function backupJSON() {
@@ -5131,8 +5192,8 @@ function handleImportFile(input, mode) {
         else throw new Error('Selecione Santander ou Bradesco para importar PDF');
         const result = applyImportData(parsed, mode);
         saveImportToStorage();
-        cfgFeedback('PDF importado: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s). Baixando HTML com dados salvos…', 'ok');
-        setTimeout(() => backupHTML(), 400);
+        cfgFeedback('PDF importado: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s). Publicando…', 'ok');
+        setTimeout(() => { backupHTML(); if (getGHConfig().token) publishToGitHub(); }, 400);
       } catch(err) {
         cfgFeedback('Erro no PDF: ' + err.message, 'err');
       }
@@ -5146,8 +5207,8 @@ function handleImportFile(input, mode) {
       const json = JSON.parse(e.target.result);
       const result = applyImportData(json, mode);
       saveImportToStorage();
-      cfgFeedback('Importação concluída: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s). Baixando HTML com dados salvos…', 'ok');
-      setTimeout(() => backupHTML(), 400);
+      cfgFeedback('Importação concluída: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s). Publicando…', 'ok');
+      setTimeout(() => { backupHTML(); if (getGHConfig().token) publishToGitHub(); }, 400);
     } catch(err) {
       cfgFeedback('Erro ao importar: ' + err.message, 'err');
     }
@@ -5486,6 +5547,7 @@ document.addEventListener('keydown', function(e) {
       <button class="cfg-tab" data-tab="backup" onclick="switchCfgTab('backup')">Backup</button>
       <button class="cfg-tab" data-tab="import" onclick="switchCfgTab('import')">Importar</button>
       <button class="cfg-tab" data-tab="ai" onclick="switchCfgTab('ai')">IA</button>
+      <button class="cfg-tab" data-tab="publish" onclick="switchCfgTab('publish')">Publicar</button>
     </div>
 
     <div class="cfg-body">
@@ -5580,6 +5642,20 @@ document.addEventListener('keydown', function(e) {
           <button class="cfg-secondary-btn" onclick="clearAIKey()">Remover</button>
         </div>
         <div id="cfg-ai-key-status" class="cfg-info" style="margin-top:10px;display:none;"></div>
+      </div>
+
+      <!-- TAB: PUBLICAR -->
+      <div class="cfg-tab-panel" data-panel="publish">
+        <div class="cfg-label">Publicar no GitHub Pages</div>
+        <div class="cfg-info">Após configurar, cada importação atualiza automaticamente o site para <strong>todos os visitantes</strong>. Crie um token em: GitHub → Settings → Developer settings → Personal access tokens → Generate new token (permissão: <span style="font-family:var(--font-mono);color:var(--accent);">repo</span>).</div>
+        <input id="cfg-gh-token"  class="cfg-input" type="password" placeholder="ghp_… (Personal Access Token)" autocomplete="off" style="font-family:var(--font-mono);font-size:11px;margin-top:10px;">
+        <input id="cfg-gh-owner"  class="cfg-input" type="text" placeholder="Owner (ex: marcospontesjuca1-svg)">
+        <input id="cfg-gh-repo"   class="cfg-input" type="text" placeholder="Repositório (ex: selema)">
+        <input id="cfg-gh-branch" class="cfg-input" type="text" placeholder="Branch (ex: main)">
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="cfg-primary-btn" style="flex:1" onclick="saveGHConfig()">Salvar configuração</button>
+          <button class="cfg-secondary-btn green-hover" onclick="publishToGitHub()">Publicar agora</button>
+        </div>
       </div>
 
       <!-- Feedback único fora das tabs -->
