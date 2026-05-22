@@ -4912,6 +4912,7 @@ function init() {
 var IMPORT_STORE_KEY = 'selema_imports';
 init();
 loadPersistedImports();
+loadFromRemote();
 
 // ===========================
 // SETTINGS PANEL
@@ -5118,45 +5119,56 @@ function saveGHConfig() {
   cfgFeedback('Configuração GitHub salva. Próxima importação publicará automaticamente.', 'ok');
 }
 
+function loadFromRemote() {
+  // Load data.json published by publishToGitHub — works on GitHub Pages and any HTTP server
+  fetch('./data.json?_=' + Date.now(), { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(function(data) {
+      if (!data) return;
+      if (data.santander) applyImportData(data.santander, 'santander');
+      if (data.bradesco)  applyImportData(data.bradesco,  'bradesco');
+    })
+    .catch(function() {}); // silent — data.json may not exist yet
+}
+
 async function publishToGitHub() {
   const cfg = getGHConfig();
   if (!cfg.token) { cfgFeedback('Configure o token GitHub em Configurações → Publicar.', 'err'); return; }
-  cfgFeedback('Publicando no GitHub Pages…', 'ok');
+  cfgFeedback('Publicando dados no GitHub…', 'ok');
   try {
-    const headers = { 'Authorization': 'token ' + cfg.token, 'Accept': 'application/vnd.github.v3+json' };
-    const apiUrl = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path;
-
-    // Fetch the CLEAN source directly from GitHub API — avoids accumulated injections
-    const r = await fetch(apiUrl + '?ref=' + cfg.branch + '&_=' + Date.now(), { headers, cache: 'no-store' });
-    const file = await r.json();
-    if (!file.sha || !file.content) throw new Error(file.message || 'Arquivo não encontrado');
-
-    // Decode base64 → UTF-8 string
-    const b64 = file.content.replace(/\n/g, '');
-    const raw = atob(b64);
-    const bytes = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-    const sourceHtml = new TextDecoder().decode(bytes);
-
-    // Inject data (embedData removes previous injections first)
-    const html = embedData(sourceHtml);
-
-    // Encode back to base64
+    const snapshot = {
+      santander: { data: SANTANDER_DATA, accrued: SANTANDER_ACCRUED, expenses: SANTANDER_EXPENSES },
+      bradesco:  { data: BRADESCO_DATA,  accrued: BRADESCO_ACCRUED,  income: BRADESCO_INCOME, expenses: BRADESCO_EXPENSES }
+    };
+    // UTF-8 safe base64 encode
+    const jsonStr = JSON.stringify(snapshot);
     const enc = new TextEncoder();
-    const outBytes = enc.encode(html);
+    const bytes = enc.encode(jsonStr);
     let bin = '';
-    outBytes.forEach(b => bin += String.fromCharCode(b));
+    bytes.forEach(b => bin += String.fromCharCode(b));
     const content = btoa(bin);
 
+    const headers = { 'Authorization': 'token ' + cfg.token, 'Accept': 'application/vnd.github.v3+json' };
+    const apiUrl = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/data.json';
+
+    // Get current SHA of data.json (may not exist yet)
+    let sha;
+    const r = await fetch(apiUrl + '?ref=' + cfg.branch + '&_=' + Date.now(), { headers, cache: 'no-store' });
+    const existing = await r.json();
+    if (existing.sha) sha = existing.sha;
+
     const now = new Date().toISOString().slice(0, 7);
+    const body = { message: 'dados: ' + now, content, branch: cfg.branch };
+    if (sha) body.sha = sha;
+
     const put = await fetch(apiUrl, {
       method: 'PUT',
       headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
-      body: JSON.stringify({ message: 'dados: ' + now, content, sha: file.sha, branch: cfg.branch })
+      body: JSON.stringify(body)
     });
     const result = await put.json();
     if (result.content) {
-      cfgFeedback('✓ Publicado no GitHub Pages! Atualiza em ~1 minuto.', 'ok');
+      cfgFeedback('✓ Publicado! Todos verão os dados em ~1 minuto.', 'ok');
     } else {
       throw new Error(result.message || JSON.stringify(result));
     }
