@@ -5064,12 +5064,14 @@ function resetPassword() {
 }
 
 function embedData(html) {
+  // Remove any previous injection before adding a fresh one
+  html = html.replace(/\n?<!--SELEMA_DATA_START-->[\s\S]*?<!--SELEMA_DATA_END-->\n?/g, '');
   const snapshot = {
     santander: { data: SANTANDER_DATA, accrued: SANTANDER_ACCRUED, expenses: SANTANDER_EXPENSES },
     bradesco:  { data: BRADESCO_DATA,  accrued: BRADESCO_ACCRUED,  income: BRADESCO_INCOME, expenses: BRADESCO_EXPENSES }
   };
   const safe = JSON.stringify(snapshot).replace(/<\//g, '<\\/');
-  const inj = '\n<script>(function(){try{var d=' + safe + ';applyImportData(d.santander,"santander");applyImportData(d.bradesco,"bradesco");saveImportToStorage();}catch(e){console.warn("selema backup",e);}})();<\/script>\n';
+  const inj = '\n<!--SELEMA_DATA_START--><script>(function(){try{var d=' + safe + ';applyImportData(d.santander,"santander");applyImportData(d.bradesco,"bradesco");saveImportToStorage();}catch(e){console.warn("selema",e);}})();<\/script><!--SELEMA_DATA_END-->\n';
   return html.replace('</body>', inj + '</body>');
 }
 
@@ -5128,18 +5130,27 @@ async function publishToGitHub() {
     const headers = { 'Authorization': 'token ' + cfg.token, 'Accept': 'application/vnd.github.v3+json' };
     const apiUrl = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path;
 
-    // Build content first, then fetch SHA immediately before PUT (minimises mismatch window)
-    const html = await getEmbedHtml();
-    const enc = new TextEncoder();
-    const bytes = enc.encode(html);
-    let bin = '';
-    bytes.forEach(b => bin += String.fromCharCode(b));
-    const content = btoa(bin);
-
-    // Fetch SHA fresh, no cache
+    // Fetch the CLEAN source directly from GitHub API — avoids accumulated injections
     const r = await fetch(apiUrl + '?ref=' + cfg.branch + '&_=' + Date.now(), { headers, cache: 'no-store' });
     const file = await r.json();
-    if (!file.sha) throw new Error(file.message || 'Arquivo não encontrado no repositório');
+    if (!file.sha || !file.content) throw new Error(file.message || 'Arquivo não encontrado');
+
+    // Decode base64 → UTF-8 string
+    const b64 = file.content.replace(/\n/g, '');
+    const raw = atob(b64);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    const sourceHtml = new TextDecoder().decode(bytes);
+
+    // Inject data (embedData removes previous injections first)
+    const html = embedData(sourceHtml);
+
+    // Encode back to base64
+    const enc = new TextEncoder();
+    const outBytes = enc.encode(html);
+    let bin = '';
+    outBytes.forEach(b => bin += String.fromCharCode(b));
+    const content = btoa(bin);
 
     const now = new Date().toISOString().slice(0, 7);
     const put = await fetch(apiUrl, {
@@ -5151,23 +5162,6 @@ async function publishToGitHub() {
     if (result.content) {
       cfgFeedback('✓ Publicado no GitHub Pages! Atualiza em ~1 minuto.', 'ok');
     } else {
-      // SHA changed under us — retry once with fresh SHA
-      if (result.message && result.message.includes('does not match')) {
-        const r2 = await fetch(apiUrl + '?ref=' + cfg.branch + '&_=' + Date.now(), { headers, cache: 'no-store' });
-        const file2 = await r2.json();
-        if (!file2.sha) throw new Error('Retry: arquivo não encontrado');
-        const put2 = await fetch(apiUrl, {
-          method: 'PUT',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
-          body: JSON.stringify({ message: 'dados: ' + now, content, sha: file2.sha, branch: cfg.branch })
-        });
-        const result2 = await put2.json();
-        if (result2.content) {
-          cfgFeedback('✓ Publicado no GitHub Pages! Atualiza em ~1 minuto.', 'ok');
-          return;
-        }
-        throw new Error(result2.message || JSON.stringify(result2));
-      }
       throw new Error(result.message || JSON.stringify(result));
     }
   } catch(e) {
