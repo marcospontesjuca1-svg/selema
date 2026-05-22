@@ -5063,7 +5063,7 @@ function backupHTML() {
     return html.replace('</body>', inj + '</body>');
   }
 
-  const filename = 'SELEMA_backup_' + new Date().toISOString().slice(0,10) + '.html';
+  const filename = 'SELEMA_painel.html';
 
   function download(html) {
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -5074,7 +5074,7 @@ function backupHTML() {
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 5000);
-    cfgFeedback('Backup HTML exportado com todos os dados atuais.', 'ok');
+    cfgFeedback('SELEMA_painel.html baixado com todos os dados. Use sempre este arquivo.', 'ok');
   }
 
   fetch(location.href)
@@ -5130,8 +5130,9 @@ function handleImportFile(input, mode) {
         else if (mode === 'bradesco') parsed = parseBradescoPDF(pages);
         else throw new Error('Selecione Santander ou Bradesco para importar PDF');
         const result = applyImportData(parsed, mode);
-        cfgFeedback('PDF importado: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s).', 'ok');
         saveImportToStorage();
+        cfgFeedback('PDF importado: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s). Baixando HTML com dados salvos…', 'ok');
+        setTimeout(() => backupHTML(), 400);
       } catch(err) {
         cfgFeedback('Erro no PDF: ' + err.message, 'err');
       }
@@ -5144,8 +5145,9 @@ function handleImportFile(input, mode) {
     try {
       const json = JSON.parse(e.target.result);
       const result = applyImportData(json, mode);
-      cfgFeedback('Importação concluída: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s).', 'ok');
       saveImportToStorage();
+      cfgFeedback('Importação concluída: ' + result.added + ' mês(es) adicionado(s), ' + result.updated + ' atualizado(s). Baixando HTML com dados salvos…', 'ok');
+      setTimeout(() => backupHTML(), 400);
     } catch(err) {
       cfgFeedback('Erro ao importar: ' + err.message, 'err');
     }
